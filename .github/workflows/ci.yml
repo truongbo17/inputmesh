@@ -1,0 +1,32 @@
+name: InputMesh CI
+on:
+  push:
+    branches: [main, 'feat/**', 'fix/**', 'chore/**']
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  swift-core-linux:
+    runs-on: ubuntu-latest
+    container: swift:6.2
+    steps:
+      - uses: actions/checkout@v4
+      - name: Swift core and adapter compile
+        run: swift build
+      - name: Swift unit tests
+        run: swift test --parallel
+      - name: Optimized release compile
+        run: swift build -c release
+  swift-macos-compile:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: '6.2'
+      - name: Native Swift compile (not physical-permission validation)
+        run: swift build
+      - name: Swift unit tests
+        run: swift test --parallel
+      - name: Release compile
+        run: swift build -c release
