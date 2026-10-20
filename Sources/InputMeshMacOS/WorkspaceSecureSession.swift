@@ -36,6 +36,7 @@ public final class WorkspaceSessionHandshake {
     private let agreement = Curve25519.KeyAgreement.PrivateKey()
     public let hello: WorkspaceSessionHello
     private var completed = false
+    private let handshakeLock = NSLock()
 
     public init(identity: MacDeviceIdentity, role: WorkspaceSessionRole) throws {
         self.identity = identity
@@ -56,6 +57,8 @@ public final class WorkspaceSessionHandshake {
     }
 
     public func verifyAndPrepare(peer: WorkspaceSessionHello, proof: Data) throws -> WorkspaceSessionPending {
+        handshakeLock.lock()
+        defer { handshakeLock.unlock() }
         guard !completed else { throw WorkspaceSessionError.replay }
         let transcript = try Self.digest(local: hello, peer: peer)
         guard MacDeviceIdentity.verify(publicKey: peer.identityPublicKey,
@@ -105,6 +108,7 @@ public final class WorkspaceSessionPending {
     fileprivate let sender: String
     fileprivate let receiver: String
     private var activated = false
+    private let activationLock = NSLock()
 
     fileprivate init(peerIdentity: Data, comparisonCode: String, sendKey: SymmetricKey,
                      receiveKey: SymmetricKey, transcript: Data, sender: String, receiver: String) {
@@ -118,6 +122,8 @@ public final class WorkspaceSessionPending {
     }
 
     public func activateAfterUserConfirmation(enteredCode: String) throws -> WorkspaceEncryptedChannel {
+        activationLock.lock()
+        defer { activationLock.unlock() }
         guard enteredCode == comparisonCode else { throw WorkspaceSessionError.pairingNotConfirmed }
         guard !activated else { throw WorkspaceSessionError.replay }
         activated = true
