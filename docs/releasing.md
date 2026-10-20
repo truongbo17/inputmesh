@@ -22,16 +22,18 @@ Output: `dist/InputMesh-0.1.0-macos-{arm64|x86_64}-preview.zip`, matching SHA-25
 
 Pull requests and main branch run Linux core tests and native macOS tests/builds for both CPU families. Download previews from the **Actions workflow artifacts** once all jobs are green. These artifacts are engineering previews, not endorsed production releases.
 
-## Production release gate
+## Production release gate — Workspace Handoff
 
-1. Pair two physical Macs, test pointer handoff, disconnect, sleep/wake, lost permission, keyboard key-up recovery and input source changes. Record host hardware, macOS versions, video/log evidence (never key contents), target latencies and repeat counts.
-2. Have a reviewer validate the security threat model and exclusive input lease implementation.
-3. Validate supported deployment targets on actual macOS 13, 14, 15 and 26 hosts (or narrow documented support).
-4. Sign with a Developer ID Application certificate (CI keychain import from encrypted repository secrets), use Hardened Runtime, run `xcrun notarytool submit ... --wait`, staple and verify with `xcrun stapler validate` and `spctl --assess`.
-5. Create a tagged GitHub release only after steps 1–4 pass. Retain checksum, provenance and test evidence.
+The release model is Sources/InputMeshCore/ReleaseGate.swift (schema 2). Every gate must have a **reviewable HTTPS evidence reference and human/CI verifier**, not just a boolean. This model is not a replacement for an independent security assessment or hardware evidence.
 
-**Not implemented yet:** automated Developer ID secret import, notarization and stable publish. The existence of a ZIP or GitHub CI green does NOT satisfy this gate. Never describe preview builds as notarized/production ready.
+1. Linux core CI and independent native Apple Silicon / Intel build, test, ZIP architecture/checksum verification.
+2. Two physical Macs demonstrate explicit identity pairing, *both* users approving the same authenticated SAS, encrypted mutual consent, replay/tamper rejection, trusted peer revocation and reconnection.
+3. Two physical Macs demonstrate Mac A → Mac B Workspace Handoff, including clean and dirty branches, different commits, untracked files, disconnection, sleep/wake, reconnect and no unintended Git mutation.
+4. An independent reviewer signs off on the threat model, audit of crypto transport and data/privacy controls. UI review includes real native screenshots, VoiceOver and local-network onboarding; support matrix checked at runtime on advertised macOS versions.
+5. Code sign both app architectures with Developer ID Application identity and Hardened Runtime; notarize via xcrun notarytool; staple, validate and assess via spctl. Publish stable only after the signed artifact digest matches the audited build.
+
+**Current state:** preview CI only. No real network pairing, physical two-Mac test evidence, third-party security review, Developer ID notarization or native-screenshot QA. Never mark stable until every release gate is backed by real evidence. CI samples that construct ReleaseEvidence use *synthetic* URLs and only test the invariant logic.
 
 ## Automatic development preview
 
-Once all CI jobs on `main` succeed, the workflow publishes a GitHub **pre-release** named `v0.1.0-preview.<run>` containing the two macOS architecture ZIPs and checksums. It **does not** sign with a Developer ID or notarize anything. Only use these artifacts for development evaluation. This workflow is intentionally not called a stable release.
+Once CI jobs on main pass, the workflow publishes a GitHub pre-release named v0.2.0-preview.<run> with two macOS architecture ZIPs and SHA-256 files. Preview ZIPs are ad-hoc signed and not notarized.
