@@ -94,7 +94,8 @@ public struct ReleaseEvidence: Codable, Equatable, Sendable {
     }
 
     public var outstanding: [String] {
-        WorkspaceReleaseGate.allCases.filter { gate in
+        guard schemaVersion == Self.currentVersion else { return ["Unsupported release evidence schema"] }
+        return WorkspaceReleaseGate.allCases.filter { gate in
             guard let evidence = attestations[gate] else { return true }
             return (try? evidence.validate()) == nil
         }.map(\.description)

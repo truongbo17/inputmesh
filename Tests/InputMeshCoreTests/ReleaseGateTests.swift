@@ -39,6 +39,17 @@ final class ReleaseGateTests: XCTestCase {
         XCTAssertTrue(decoded.stableEligible)
     }
 
+    func testOlderReleaseSchemaFailsClosedEvenWithAllAttestations() throws {
+        var report = ReleaseEvidence()
+        for gate in WorkspaceReleaseGate.allCases { try report.record(gate, with: evidence()) }
+        let original = String(data: try JSONEncoder().encode(report), encoding: .utf8)!
+        let oldJSON = original.replacingOccurrences(of: "\"schemaVersion\":2", with: "\"schemaVersion\":1")
+        XCTAssertNotEqual(original, oldJSON)
+        let decoded = try JSONDecoder().decode(ReleaseEvidence.self, from: Data(oldJSON.utf8))
+        XCTAssertFalse(decoded.stableEligible)
+        XCTAssertEqual(decoded.outstanding, ["Unsupported release evidence schema"])
+    }
+
     func testRejectUntrustedEvidenceURLsAndEmptyVerifier() {
         XCTAssertThrowsError(try ReleaseAttestation(evidenceURL: "file:///tmp/fake.json", verifiedBy: "Tester"))
         XCTAssertThrowsError(try ReleaseAttestation(evidenceURL: "http://example.com/qa", verifiedBy: "Tester"))

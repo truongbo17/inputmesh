@@ -16,7 +16,7 @@ swift test --parallel
 ./scripts/verify-macos-app.sh dist/InputMesh.app "$(uname -m)"
 ```
 
-Output: `dist/InputMesh-0.1.0-macos-{arm64|x86_64}-preview.zip`, matching SHA-256, plus `dist/InputMesh.app`.
+Output: `dist/InputMesh-0.2.0-macos-{arm64|x86_64}-preview.zip`, matching SHA-256, plus `dist/InputMesh.app`.
 
 ## GitHub CI
 
