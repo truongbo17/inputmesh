@@ -37,7 +37,12 @@ public struct WorkspaceManifest: Codable, Equatable, Sendable {
 
     /// Decode with a conservative file limit before allocation and validate decoded values.
     public static func load(_ url: URL) throws -> WorkspaceManifest {
-        let data = try Data(contentsOf: url, options: [.mappedIfSafe])
+        guard url.isFileURL else { throw WorkspaceError.invalidManifest }
+        // Never map/read an untrusted manifest in full before checking its size.
+        // Read at most cap + 1 bytes, even if the file grows between stat and read.
+        let file = try FileHandle(forReadingFrom: url)
+        defer { try? file.close() }
+        let data = try file.read(upToCount: 64 * 1024 + 1) ?? Data()
         guard data.count <= 64 * 1024 else { throw WorkspaceError.manifestTooLarge }
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
@@ -135,7 +140,11 @@ public enum RepositoryAddress {
             return stripped
         }
         if let url = URLComponents(string: stripped), let host = url.host {
-            return host.lowercased() + url.path
+            // Do not conflate different server endpoints. HTTPS :443 is
+            // intentionally equivalent to default HTTPS and git@host:path;
+            // non-default HTTPS ports are always part of repository identity.
+            let portSuffix = (url.port == nil || url.port == 443) ? "" : ":\(url.port!)"
+            return host.lowercased() + portSuffix + url.percentEncodedPath
         }
         return stripped.lowercased()
     }
