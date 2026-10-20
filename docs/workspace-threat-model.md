@@ -23,3 +23,9 @@
 ## Release requirements
 
 Before a network release: signed binding to device identity, explicit pairing, AEAD/mTLS, replay prevention, trust revocation, malformed-payload fuzzing, App Transport Security review, Mac hardware permission QA. Until then, transfer manifest manually and verify repository identity in UI.
+
+## 2026-10-20 origin identity and bounded parsing hardening
+
+- Non-default HTTPS ports are part of repository origin identity (distinct endpoints cannot silently match by host/path).
+- The manifest reader consumes at most 65,537 bytes before rejecting a file over 64 KiB, rather than mapping an arbitrarily large untrusted file.
+- Both changes have negative regression tests; neither enables remote execution or automatic Git mutation.

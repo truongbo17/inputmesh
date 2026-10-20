@@ -11,6 +11,29 @@ final class WorkspaceTests: XCTestCase {
                                                 hasUncommittedChanges: dirty, hasUntrackedFiles: untracked))
     }
 
+
+    func testNonDefaultHTTPSPortsAreDifferentRepositories() throws {
+        let source = try manifest(origin: "https://git.example.org:8443/team/project.git")
+        let target = try manifest(origin: "https://git.example.org:9443/team/project.git")
+        let plan = try HandoffPlanner().plan(source: source, destination: target,
+                                            targetFolder: URL(fileURLWithPath: "/tmp/project"))
+        XCTAssertEqual(plan.blockers, [.differentRepository])
+        // No regression for default SSH and HTTPS scheme aliases.
+        let alias = try manifest(origin: "git@git.example.org:team/project.git")
+        XCTAssertTrue(try HandoffPlanner().plan(source: alias,
+                                                destination: try manifest(origin: "https://git.example.org:443/team/project.git"),
+                                                targetFolder: URL(fileURLWithPath: "/tmp/project")).canOpen)
+    }
+
+    func testManifestReaderCapsInputBeforeDecoding() throws {
+        let path = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: path) }
+        try Data(repeating: 65, count: 8 * 1024 * 1024).write(to: path)
+        XCTAssertThrowsError(try WorkspaceManifest.load(path)) { error in
+            XCTAssertEqual(error as? WorkspaceError, .manifestTooLarge)
+        }
+    }
+
     func testRoundTripJSON() throws {
         let m = try WorkspaceManifest(sourceDeviceName: "Mac A", repository: .init(
             origin: "https://github.com/example/project.git", branch: "main", headSHA: sha,
