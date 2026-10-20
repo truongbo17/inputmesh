@@ -4,6 +4,13 @@ public enum WorkspaceCommand {
     /// User-facing, explicit action. No network access, no filesystem mutation of Git repos.
     public static func capture(repository: URL, output: URL,
                                deviceName: String, resources: [WorkspaceResource] = []) throws -> WorkspaceManifest {
+        let root = repository.standardizedFileURL.resolvingSymlinksInPath().path
+        let target = output.standardizedFileURL.resolvingSymlinksInPath().path
+        guard target != root && !target.hasPrefix(root + "/") else {
+            // Exporting into the very repo we inspected would create an untracked
+            // file after the clean-state check and make the manifest stale.
+            throw WorkspaceError.unsafeDestination
+        }
         let manifest = try GitWorkspaceInspector().capture(at: repository, deviceName: deviceName, resources: resources)
         try manifest.write(to: output)
         return manifest

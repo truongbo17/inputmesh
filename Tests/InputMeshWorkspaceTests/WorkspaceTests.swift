@@ -133,6 +133,9 @@ final class WorkspaceTests: XCTestCase {
         _ = try runner.run(["commit", "-qm", "init"], at: dir)
         let manifestURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: manifestURL) }
+        XCTAssertThrowsError(try WorkspaceCommand.capture(
+            repository: dir, output: dir.appendingPathComponent("handoff.json"), deviceName: "Host"))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: dir.appendingPathComponent("handoff.json").path))
         _ = try WorkspaceCommand.capture(repository: dir, output: manifestURL, deviceName: "Host")
         let payload = try String(contentsOf: manifestURL, encoding: .utf8)
         XCTAssertFalse(payload.contains(dir.path))
