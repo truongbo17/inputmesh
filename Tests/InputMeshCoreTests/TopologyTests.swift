@@ -27,8 +27,8 @@ final class TopologyTests: XCTestCase {
             display("A", "a", 0, 0, 100, 200),
             display("B", "b", 100, 0, 100, 100),
             display("C", "c", 0, 200, 100, 100)])
-        let aToB = try XCTUnwrap(topo.cross(from: "A", at: VirtualPoint(x: 101, y: 100), edge: .right))
-        XCTAssertEqual(aToB.targetPoint.y, 50, accuracy: 0.01)
+        let aToB = try XCTUnwrap(topo.cross(from: "A", at: VirtualPoint(x: 101, y: 75), edge: .right))
+        XCTAssertEqual(aToB.targetPoint.y, 75, accuracy: 0.01)
         let aToC = try XCTUnwrap(topo.cross(from: "A", at: VirtualPoint(x: 25, y: 202), edge: .bottom))
         XCTAssertEqual(aToC.target.id, "C")
     }
@@ -65,5 +65,35 @@ extension TopologyTests {
     func testOverflowingVirtualGeometryRejected() {
         XCTAssertThrowsError(try VirtualRect(x: Double.greatestFiniteMagnitude, y: 0,
                                             width: Double.greatestFiniteMagnitude, height: 10))
+    }
+}
+
+extension TopologyTests {
+    func testEdgeCrossingChoosesPeerActuallyBesidePointer() throws {
+        let topology = try ScreenTopology(displays: [
+            display("source", "mac-a", 0, 0, 100, 200),
+            display("top", "mac-b", 100, 0, 120, 100),
+            display("bottom", "mac-c", 100, 100, 120, 100)
+        ])
+        XCTAssertEqual(topology.cross(from: "source", at: VirtualPoint(x: 102, y: 20), edge: .right)?.target.id, "top")
+        XCTAssertEqual(topology.cross(from: "source", at: VirtualPoint(x: 102, y: 150), edge: .right)?.target.id, "bottom")
+    }
+
+    func testCannotCrossWhereNoPhysicalTangentialOverlap() throws {
+        let topology = try ScreenTopology(displays: [
+            display("source", "mac-a", 0, 0, 100, 200),
+            display("top", "mac-b", 100, 0, 100, 80)
+        ])
+        XCTAssertNil(topology.cross(from: "source", at: VirtualPoint(x: 101, y: 130), edge: .right))
+    }
+
+    func testTangentialPositionRemainsStableAcrossDifferentDisplaySizes() throws {
+        let topology = try ScreenTopology(displays: [
+            display("source", "mac-a", 0, 100, 100, 300),
+            display("target", "mac-b", 100, 120, 100, 200)
+        ])
+        let handoff = try XCTUnwrap(topology.cross(from: "source", at: VirtualPoint(x: 105, y: 210), edge: .right))
+        XCTAssertEqual(handoff.targetPoint.y, 210, accuracy: 0.01)
+        XCTAssertEqual(handoff.targetPoint.x, 105, accuracy: 0.01)
     }
 }

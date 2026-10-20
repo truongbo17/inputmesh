@@ -1,86 +1,91 @@
 # InputMesh
 
-**One input. Every desktop.** A local-first, peer-to-peer control plane intended to share one physical keyboard and pointer across multiple independent computers.
+> **One input. Every desktop.** A future cross-platform, local-first way to use one keyboard and mouse across independent computers.
 
-> **Development status — 2026-10-20: Sprint 0 / native feasibility. NOT a functioning cross-device controller.**
-> The first supported adapter is planned for **macOS ↔ macOS**. Windows and Linux are architectural targets, not supported applications today.
-> Pure Swift core and adapter contracts run in Linux unit tests; Quartz native APIs and real two-Mac control **have not been verified on macOS hardware**.
+![InputMesh dashboard design reference — not a native macOS screenshot](docs/assets/dashboard-design-preview.png)
 
-## Product roadmap
+> **Visual status:** the image is an explicitly labeled **UI design reference** made from an HTML layout. The matching interface is implemented in SwiftUI, but no screenshot of the real macOS app has been validated yet. See [UX specification](docs/ui-ux.md).
 
-| Phase | Scope | Status |
-|---|---|---|
-| 0 — macOS native feasibility | Capture, injection, cursor handoff, fail-back on two actual Macs | In progress; physical gate outstanding |
-| 1 — input reliability | Pressed-input safety, filtering, local recovery, performance | Not started |
-| 2 — secure peer sessions | Bonjour, explicit pairing, authenticated transport, leases | Not started |
-| 3 — multiple Macs | A ↔ B ↔ C display topology, device settings | Not started |
-| 4 — UX & beta | Menu bar app, permissions, signing, regression | Not started |
-| Future | Windows/Linux native adapters and interop | Design only; not promised for a specific release |
+## Project status · 20 October 2026
 
-## Implemented today
+**Developer preview, not Universal Control functionality.** This codebase is under active development; do not install expecting functional cross-Mac control. Native input capture/injection and OS authorization are not yet verified on physical Macs. Security is fail-closed for remote input: no listener or unpaired remote control is exposed by the app.
 
-- OS-neutral virtual-display topology with edge handoff calculations in logical point coordinates.
-- Deterministic input session states: LOCAL → SWITCHING → REMOTE → RECOVERING → LOCAL.
-- Ack-gated remote routing (the state model only; no active network session yet).
-- Pressed key/button tracking and a receiver-side gate: source/lease/sequence validation, limited input bounds, pending-release retry after injection errors. **These are layered checks, not a substitute for cryptographic authentication.**
-- Bounded, versioned JSON frame codec for development; no production wire transport.
-- OS/capability descriptor and platform-neutral input/permission/display interfaces in `InputMeshPlatform`.
-- macOS Quartz **passive** event probe (event counters only) and a single-host input-injection adapter, both **unverified on macOS**.
-- Portable Swift tests, CI job definitions and documented acceptance criteria.
+| Feature | State |
+|---|---|
+| Shared topology, session model, replay/pressed-state checks | Implemented & unit-tested |
+| macOS Quartz passive input probe / injector | Implemented as diagnostic adapters; physical verification pending |
+| Native SwiftUI desktop + menu bar / permission onboarding | Implemented; native build/test pending |
+| macOS Apple Silicon and Intel native CI + ZIP packaging | Workflow implemented; CI evidence pending |
+| Encrypted discovery/pairing, cross-Mac control, clipboard | **Not implemented** |
+| Developer ID signature, notarization, reliable 2-Mac handoff | **Not implemented** |
+| Windows/Linux support | Adapter contracts only; not implemented |
 
-## Not implemented
+## Device support & packaging
 
-- No peer discovery, pairing, mTLS, socket transport, input routing over a network or clipboard synchronization.
-- No active event suppression, robust cursor transfer, system-menu app, installer, Windows/Linux binary or notarization.
-- No real macOS proof of input capture, suppression, injection or physical-device latency.
+| Architecture | GitHub Actions build | Minimum declared OS | Release quality |
+|---|---|---|---|
+| Apple Silicon (M1, M2, M3, M4 and later) `arm64` | `macos-15` | macOS 13 | Unnotarized preview, pending CI |
+| Intel x86-64 `x86_64` | `macos-15-intel` | macOS 13 | Unnotarized preview, pending CI |
 
-## Source layout
+> The minimum macOS 13 deployment declaration is **not yet a runtime certification**. Actual macOS 13/14/15/26 compatibility needs testing. A production version will only ship after Developer ID signing, notarization and hands-on reliability/security testing.
+
+## Building and trying the local diagnostic preview
+
+Requires a Mac with Xcode CLI tools / Swift 6.2. On a Linux workstation only the platform-neutral core can build.
+
+```bash
+git clone https://github.com/truongbo17/inputmesh.git
+cd inputmesh
+swift test --parallel
+./scripts/build-macos-app.sh
+open dist/InputMesh.app
+```
+
+Only grant permissions after reviewing the app's permissions explanation. This preview operates locally, exposes no network control endpoint and cannot yet connect another Mac. Its `inputmesh --probe` CLI reports counts, not typed keys or pointer coordinates.
+
+Alternatively see [Releases](https://github.com/truongbo17/inputmesh/releases) for clearly marked developer previews, or [Actions](https://github.com/truongbo17/inputmesh/actions) for test reports and CI artifacts. The ZIP is ad-hoc signed, **not** Gatekeeper-notarized; it is not a user-facing stable installer.
+
+## App navigation
+
+- **Overview** — local machine readiness, honest control state and a workspace placeholder.
+- **Devices** — pairing status; disabled until encrypted trusted pairing is implemented.
+- **Screen Layout** — topology planning (editor pending).
+- **Security** — Accessibility status and privacy guarantees.
+- **About** — source and preview status.
+
+## Architecture
 
 ```text
 Sources/
-  InputMeshCore/          # Portable Swift: state, geometry, framing, peer capability model
-  InputMeshPlatform/      # OS-independent input/permission/display adapter contracts
-  InputMeshMacOS/         # Quartz-based probe/injection; macOS-specific
-  InputMeshCLI/           # Sprint 0 diagnostics entry point
+  InputMeshCore/         # Pure Swift algorithms, typed protocol models, release gate
+  InputMeshPlatform/     # Cross-platform capture/inject/display/permission interfaces
+  InputMeshMacOS/        # AppKit/Quartz display, capture diagnostic, input injector
+  InputMeshCLI/          # Non-networked diagnostics
+  InputMeshDesktop/      # Native SwiftUI desktop + macOS menu bar
 Tests/
-  InputMeshCoreTests/
+  InputMeshCoreTests/    # Linux and macOS portable tests
   InputMeshPlatformTests/
+scripts/
+  build-macos-app.sh     # Native arch build, .app, ad-hoc signature, ZIP, checksum
+  verify-macos-app.sh    # Bundle/arch/signature verification (NOT notarization)
 docs/
-  architecture.md
-  cross-platform.md
-  security.md
-  test-plan.md
-  roadmap.md
+  ui-ux.md, architecture.md, security.md, cross-platform.md
+  competitor-review.md, releasing.md, test-plan.md, roadmap.md
 ```
 
-Future `InputMeshWindows`/`InputMeshLinux` adapters must satisfy the same contracts. A shared Go transport/control service remains an **architecture option for later networking sprints**, not shipped code. No transport or input protocol compatibility with other projects is implied.
+The Swift portable core and native adapters are real code; a Go control daemon remains a future architectural option, **not** an implemented dependency. No backend, tracking services or OS-level protection bypass are included.
 
-## Build and tests
+## Security and release policy
 
-Requires Swift 6.2.1+ (current package language mode is Swift 5 for compatibility), macOS 13+ for native functionality.
+No root or SIP bypass. No key-value logging. No unauthenticated remote input. A legitimate release needs cryptographic pairing, exclusive input leases, fail-open recovery and physical hardware evidence. The [release evidence model](Sources/InputMeshCore/ReleaseGate.swift) deliberately fails until every gate is established. A green unit test does not prove Universal Control works.
 
-```sh
-swift build
-swift test --parallel
-swift build -c release
-swift run inputmesh --help
-```
+- [Developer guide](CONTRIBUTING.md)
+- [Native UX specification](docs/ui-ux.md)
+- [Cross-platform architecture](docs/cross-platform.md)
+- [Security threat model](docs/security.md)
+- [Competitor research](docs/competitor-review.md)
+- [macOS release engineering](docs/releasing.md)
+- [Test plan](docs/test-plan.md)
+- [Roadmap](docs/roadmap.md)
 
-On an actual Mac, after granting any OS-required permissions to the executable host process:
-
-```sh
-swift run inputmesh --doctor
-swift run inputmesh --probe
-```
-
-`--probe` is **passive**. It prints aggregate event counts periodically; it does not log key values, screen coordinates, typed text, send packets, suppress input or inject events.
-
-## Security constraints
-
-No root, no SIP bypass, no cloud requirement, no logging of input contents. Never accept remote input from an unpaired peer or use an unsecured plaintext transport to demo remote control. For actual release, authentication, per-session leases and physical fail-safe recovery are mandatory. See [threat model](docs/security.md).
-
-## Contributing and release status
-
-Read [contributing](CONTRIBUTING.md), [architecture](docs/architecture.md), [cross-platform contract](docs/cross-platform.md), [test plan](docs/test-plan.md), and [roadmap](docs/roadmap.md).
-
-**Repository hosting:** Local Git repository exists. The connected GitHub tool cannot create a new repository. The proposed destination is `truongbo17/inputmesh` (private); no GitHub upload is claimed until that repository exists and a push succeeds.
+License, name availability and distribution strategy must be agreed before public commercialization. No license grant is implied by the repository being publicly visible.
