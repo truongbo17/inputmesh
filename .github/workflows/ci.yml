@@ -22,6 +22,8 @@ jobs:
         run: swift build
       - name: Unit tests
         run: swift test --parallel
+      - name: End-to-end local Git handoff smoke
+        run: ./scripts/test-workspace-handoff.sh
       - name: Optimized build
         run: swift build -c release
 
@@ -48,6 +50,8 @@ jobs:
         run: swift build --product InputMeshDesktop
       - name: Unit tests on macOS
         run: swift test --parallel
+      - name: End-to-end local Git handoff smoke
+        run: ./scripts/test-workspace-handoff.sh
       - name: Package and verify native app (ad-hoc preview)
         run: |
           ./scripts/build-macos-app.sh
@@ -80,8 +84,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -f dist/InputMesh-0.1.0-macos-arm64-preview.zip
-          test -f dist/InputMesh-0.1.0-macos-x86_64-preview.zip
+          test -f dist/InputMesh-0.2.0-macos-arm64-preview.zip
+          test -f dist/InputMesh-0.2.0-macos-x86_64-preview.zip
           cd dist
           for sum in *.sha256; do shasum -a 256 -c "$sum"; done
       - name: Publish pre-release with explicit warnings
@@ -89,10 +93,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          VERSION="v0.1.0-preview.${GITHUB_RUN_NUMBER}"
+          VERSION="v0.2.0-preview.${GITHUB_RUN_NUMBER}"
           gh release create "$VERSION" dist/*.zip dist/*.sha256 \
             --repo "${GITHUB_REPOSITORY}" \
             --target "${GITHUB_SHA}" \
             --prerelease --latest=false \
-            --title "InputMesh $VERSION · local-only diagnostic PREVIEW" \
+            --title "InputMesh $VERSION · local workspace diagnostic PREVIEW" \
             --notes-file docs/preview-release-notes.md

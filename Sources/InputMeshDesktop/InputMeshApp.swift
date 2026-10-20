@@ -6,6 +6,7 @@ import ApplicationServices
 @main
 struct InputMeshApp: App {
     @StateObject private var appModel = InputMeshAppModel()
+    @Environment(\.openWindow) private var openWindow
 
     var body: some Scene {
         WindowGroup("InputMesh", id: "dashboard") {
@@ -17,22 +18,26 @@ struct InputMeshApp: App {
         .commands {
             CommandGroup(replacing: .newItem) { }
             CommandMenu("InputMesh") {
+                Button("Open Workspace Handoff") { openWindow(id: "handoff") }
+                    .keyboardShortcut("h", modifiers: [.command, .shift])
                 Button("Refresh Diagnostics") { appModel.refresh() }
                     .keyboardShortcut("r", modifiers: .command)
                 Divider()
                 Button("Open Accessibility Settings") { appModel.openAccessibilitySettings() }
             }
         }
+        Window("Workspace Handoff", id: "handoff") {
+            WorkspaceHandoffView()
+        }
+        .defaultSize(width: 750, height: 670)
 
-        MenuBarExtra("InputMesh", systemImage: "cursorarrow.rays") {
-            Text("InputMesh · Local mode")
-            Text("Remote control is not enabled in this preview")
+        MenuBarExtra("InputMesh", systemImage: "arrow.left.arrow.right.square") {
+            Text("InputMesh · Workspace preview")
+            Text("Remote control and remote peer pairing are disabled")
                 .foregroundStyle(.secondary)
             Divider()
-            Button("Open InputMesh") {
-                NSApplication.shared.activate(ignoringOtherApps: true)
-                for window in NSApplication.shared.windows where window.canBecomeMain { window.makeKeyAndOrderFront(nil) }
-            }
+            Button("Open Workspace Handoff") { openWindow(id: "handoff") }
+            Button("Open Dashboard") { openWindow(id: "dashboard") }
             Button("Refresh Permissions") { appModel.refresh() }
             Divider()
             Button("Quit InputMesh") { NSApplication.shared.terminate(nil) }
@@ -48,14 +53,12 @@ final class InputMeshAppModel: ObservableObject {
     @Published private(set) var refreshedAt: Date = Date()
 
     init() { refresh() }
-
     func refresh() {
         accessibilityAllowed = AXIsProcessTrusted()
         currentHost = Host.current().localizedName ?? "This Mac"
         platformVersion = ProcessInfo.processInfo.operatingSystemVersionString
         refreshedAt = Date()
     }
-
     func openAccessibilitySettings() {
         guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") else { return }
         NSWorkspace.shared.open(url)

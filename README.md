@@ -1,14 +1,14 @@
 # InputMesh
 
-> **One input. Every desktop.** A future cross-platform, local-first way to use one keyboard and mouse across independent computers.
+> **Continue your workspace on another device.** An open, local-first handoff tool for developers. The former cross-computer cursor concept is archived in history; Deskflow covers that market.
 
 ![InputMesh dashboard design reference — not a native macOS screenshot](docs/assets/dashboard-design-preview.png)
 
 > **Visual status:** the image is an explicitly labeled **UI design reference** made from an HTML layout. The matching interface is implemented in SwiftUI, but no screenshot of the real macOS app has been validated yet. See [UX specification](docs/ui-ux.md).
 
-## Project status · 20 October 2026
+## Project status · 20 October 2026 — Workspace Handoff preview
 
-**Developer preview, not Universal Control functionality.** This codebase is under active development; do not install expecting functional cross-Mac control. Native input capture/injection and OS authorization are not yet verified on physical Macs. Security is fail-closed for remote input: no listener or unpaired remote control is exposed by the app.
+**Workspace Handoff developer preview, not Universal Control functionality.** This codebase is under active development; do not install expecting functional cross-Mac control. Native input capture/injection and OS authorization are not yet verified on physical Macs. Security is fail-closed for remote input: no listener or unpaired remote control is exposed by the app.
 
 | Feature | State |
 |---|---|
@@ -19,6 +19,25 @@
 | Encrypted discovery/pairing, cross-Mac control, clipboard | **Not implemented** |
 | Developer ID signature, notarization, reliable 2-Mac handoff | **Not implemented** |
 | Windows/Linux support | Adapter contracts only; not implemented |
+
+## Workspace Handoff (new product direction)
+
+**Implemented:** Inspect an existing local Git repository, capture a minimal JSON manifest (origin/branch/commit + clean/dirty status), transfer JSON yourself (for example AirDrop), import it on another machine, compare the destination Git state and explicitly open Visual Studio Code **only when both copies are clean and at the same commit**. Nothing in Git is reset, pulled, checked out, cloned or overwritten. Unsaved editor buffers are **not transferred**.
+
+**Not implemented:** secure peer discovery, encrypted pairing, automatic remote handoff, transfer of changed files, background listener and fully automated one-click workspace continuation. These remain separate production gates.
+
+```bash
+swift build && swift test --parallel
+./scripts/test-workspace-handoff.sh
+swift run inputmesh workspace capture --repo ~/code/project --out ~/Desktop/workspace.inputmesh.json
+# AirDrop the JSON to the target Mac with the same Git clone/commit, then:
+swift run inputmesh workspace inspect --manifest ~/Downloads/workspace.inputmesh.json --repo ~/code/project
+swift run inputmesh workspace continue --manifest ~/Downloads/workspace.inputmesh.json --repo ~/code/project
+```
+
+The desktop application's **InputMesh > Open Workspace Handoff** menu opens a native SwiftUI workflow with system file/folder pickers and blocking-conflict explanations. Imported manifests contain source metadata and are **not signed or encrypted**; only import from trusted sources.
+
+Read the [handoff specification](docs/workspace-handoff.md) and [threat model](docs/workspace-threat-model.md) before testing. **Do not treat an ad-hoc-signed preview as a stable installer.**
 
 ## Device support & packaging
 
@@ -58,12 +77,14 @@ Alternatively see [Releases](https://github.com/truongbo17/inputmesh/releases) f
 ```text
 Sources/
   InputMeshCore/         # Pure Swift algorithms, typed protocol models, release gate
+  InputMeshWorkspace/    # Portable Git snapshot, manifest, conflicts and explicit handoff
   InputMeshPlatform/     # Cross-platform capture/inject/display/permission interfaces
   InputMeshMacOS/        # AppKit/Quartz display, capture diagnostic, input injector
   InputMeshCLI/          # Non-networked diagnostics
   InputMeshDesktop/      # Native SwiftUI desktop + macOS menu bar
 Tests/
   InputMeshCoreTests/    # Linux and macOS portable tests
+  InputMeshWorkspaceTests/ # Local Git repo and adversarial handoff tests
   InputMeshPlatformTests/
 scripts/
   build-macos-app.sh     # Native arch build, .app, ad-hoc signature, ZIP, checksum
