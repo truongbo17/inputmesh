@@ -7,7 +7,7 @@ import Security
 /// authorize any peer without an explicit verified SAS and two-way consent.
 public enum WorkspaceSessionError: Error, Equatable {
     case malformedHello, incorrectRole, badSignature, invalidPeer
-    case pairingNotConfirmed, replay, invalidFrame, oversizedFrame, exhausted, entropyFailure
+    case pairingNotConfirmed, replay, invalidFrame, oversizedFrame, exhausted, entropyFailure, revoked
 }
 
 public enum WorkspaceSessionRole: String, Codable {
@@ -121,7 +121,7 @@ public final class WorkspaceSessionPending {
         self.receiver = receiver
     }
 
-    public func activateAfterUserConfirmation(enteredCode: String) throws -> WorkspaceEncryptedChannel {
+    func activateAfterUserConfirmation(enteredCode: String) throws -> WorkspaceEncryptedChannel {
         activationLock.lock()
         defer { activationLock.unlock() }
         guard enteredCode == comparisonCode else { throw WorkspaceSessionError.pairingNotConfirmed }
@@ -144,6 +144,7 @@ public final class WorkspaceEncryptedChannel {
     private var sendSequence: UInt64 = 0
     private var receiveSequence: UInt64 = 0
     private let mutex = NSLock()
+    private var revoked = false
 
     fileprivate init(sendKey: SymmetricKey, receiveKey: SymmetricKey,
                      transcript: Data, sender: String, receiver: String) {
@@ -151,8 +152,15 @@ public final class WorkspaceEncryptedChannel {
         self.transcript = transcript; self.sender = sender; self.receiver = receiver
     }
 
+    public func invalidate() {
+        mutex.lock()
+        revoked = true
+        mutex.unlock()
+    }
+
     public func seal(_ data: Data) throws -> Data {
         mutex.lock(); defer { mutex.unlock() }
+        guard !revoked else { throw WorkspaceSessionError.revoked }
         guard data.count <= Self.maxPayload else { throw WorkspaceSessionError.oversizedFrame }
         guard sendSequence < UInt64.max else { throw WorkspaceSessionError.exhausted }
         let n = sendSequence
@@ -165,6 +173,7 @@ public final class WorkspaceEncryptedChannel {
 
     public func open(_ frame: Data) throws -> Data {
         mutex.lock(); defer { mutex.unlock() }
+        guard !revoked else { throw WorkspaceSessionError.revoked }
         guard frame.count >= 8 + 12 + 16 else { throw WorkspaceSessionError.invalidFrame }
         guard frame.count <= Self.maxPayload + 8 + 12 + 16 else {
             throw WorkspaceSessionError.oversizedFrame
