@@ -55,7 +55,7 @@ On macOS the native app opens a separate Workspace Handoff window through the In
 | Sprint 2 · Workspace | v1 portable manifest, real Git CLI capture, conflict-safe planner | Unit tests, malformed manifest and dirty repo tests | Git repos on both Macs with independent changes |
 | Sprint 3 · Handoff | Import, inspect and explicit VS Code open | CLI end-to-end across two independent local clones; native macOS CI | Mac A sends to Mac B with user-selected AirDrop; verify editor launch |
 
-**Status:** Sprint 2 *portable path implemented and Linux-tested*. Sprint 3 local file workflow *implemented pending macOS physical QA*. Sprint 1 network/pairing **not implemented**, so the one-click remote transport epic remains blocked. Do not label these sprints fully done without physical gate evidence.
+**Status:** Sprint 2 *portable path implemented and Linux-tested*. Sprint 3 local file workflow *implemented pending macOS physical QA*. Sprint 1 CryptoKit identity and signed-challenge building blocks **implemented in source; network pairing not implemented**, so the one-click remote transport epic remains blocked. Do not label these sprints fully done without physical gate evidence.
 
 ### Later secure transport design (not shipped)
 

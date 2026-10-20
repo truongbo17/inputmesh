@@ -29,6 +29,7 @@ private enum DashboardPage: String, CaseIterable, Identifiable {
 struct DashboardView: View {
     @EnvironmentObject private var model: InputMeshAppModel
     @State private var page: DashboardPage = .overview
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         NavigationSplitView {
@@ -86,7 +87,10 @@ struct DashboardView: View {
 
     private var overview: some View {
         VStack(alignment: .leading, spacing: 22) {
-            heading("Workspace overview", subtitle: "A secure home for your connected desktops.")
+            heading("Workspace overview", subtitle: "Safely continue an existing Git project on another device.")
+            Button { openWindow(id: "handoff") } label: {
+                Label("Open Workspace Handoff", systemImage: "arrow.left.arrow.right.square")
+            }.buttonStyle(.borderedProminent)
             HStack(spacing: 14) {
                 statCard("Local computer", value: "1", symbol: "desktopcomputer", note: "Available for diagnostics")
                 statCard("Trusted devices", value: "0", symbol: "link", note: "Pairing is not available yet")

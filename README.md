@@ -24,6 +24,8 @@
 
 **Implemented:** Inspect an existing local Git repository, capture a minimal JSON manifest (origin/branch/commit + clean/dirty status), transfer JSON yourself (for example AirDrop), import it on another machine, compare the destination Git state and explicitly open Visual Studio Code **only when both copies are clean and at the same commit**. Nothing in Git is reset, pulled, checked out, cloned or overwritten. Unsaved editor buffers are **not transferred**.
 
+**Partial security foundation:** native macOS identity generation, Keychain support and signed challenge primitives (not authenticated transport).
+
 **Not implemented:** secure peer discovery, encrypted pairing, automatic remote handoff, transfer of changed files, background listener and fully automated one-click workspace continuation. These remain separate production gates.
 
 ```bash

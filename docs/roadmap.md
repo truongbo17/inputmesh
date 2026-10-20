@@ -1,60 +1,51 @@
-# Roadmap and issue decomposition — InputMesh
+# InputMesh product roadmap — Cross-Device Workspace (2026-10-20)
 
-## Sprint 0 — Mac native feasibility (IN PROGRESS)
+**Decision:** stop competing with Deskflow as a mouse/keyboard sharing application. InputMesh concentrates on **Continue Workspace on Another Device**. Source packages from the original input-control spike are kept for reference, not presented as a production feature.
 
-- [x] S0-01 Repository structure, portable Swift domain model and unit tests (Linux verified).
-- [x] S0-02 Passive macOS event probe and Quartz injector **source written; Mac compile/use unverified**.
-- [x] S0-03 GitHub Actions workflow file prepared (remote CI not executed).
-- [x] S0-08 Rename MultiMac → InputMesh in new source, docs, CLI and SwiftPM targets.
-- [x] S0-09 Introduce `InputMeshPlatform` contracts and capabilities for future OS adapters.
-- [x] S0-10 Harden the local receiver gate, retry failed releases, and add unit tests (Linux verified).
-- [ ] S0-04 Native macOS build, Accessibility / Input Monitoring diagnostics on a real Mac.
-- [ ] S0-05 Single-host suppression and fail-safe return to local input.
-- [ ] S0-06 Two actual Macs: pointer handoff, click and keyboard.
-- [ ] S0-07 Benchmark p50/p95, input correctness and error-case evidence.
+The sprints below have strictly ordered gates. Source written and green CI is not equivalent to a physical cross-Mac user journey.
 
-**Sprint 0 exit gate remains BLOCKED** without evidence from physical macOS hardware.
+## Sprint 1 — Trusted Device Foundation (PARTIAL; blocked for completion)
 
-## Sprint 1 — Native input reliability (NOT STARTED)
+- [x] S1.1 Define trust boundaries, fingerprint and pairing strategy.
+- [x] S1.2 Native CryptoKit Curve25519 identity, Keychain persistence module (source; macOS CI verification required).
+- [x] S1.3 Signed challenge verification, deterministic human comparison code and negative cryptographic tests (source; CI verification required).
+- [ ] S1.4 Bonjour discovery service and Local Network permission onboarding.
+- [ ] S1.5 Bidirectional explicit user consent for identity pairing.
+- [ ] S1.6 Bind peer public keys and proof-of-possession to end-to-end encrypted session, version/replay limits and revocation.
+- [ ] S1.7 Physical test on **two Macs**: compare SAS out-of-band, accept/reject and revoke trust; verify unauthorized peer rejected.
 
-- S1-01 Bounded nonblocking tap-to-worker queue, watchdog and error counters.
-- S1-02 Synthetic event tagging / capture-loop prevention.
-- S1-03 Relative pointer, warp, multiple displays and trackpad test matrix.
-- S1-04 Native pressed-state release and failed-release recovery.
-- S1-05 Panic hotkey, timeout, lock/sleep and permission-loss handling.
+**Exit gate:** authenticated and encrypted connection between two Macs, physically verified. Keychain identity/cryptography alone does NOT satisfy the gate.
 
-## Sprint 2 — Secure peer networking (NOT STARTED)
+## Sprint 2 — Workspace Context (portable implementation; physical acceptance pending)
 
-- S2-01 Bonjour discovery with manual-IP fallback and LAN permission onboarding.
-- S2-02 Keychain device identity + explicit pairing ceremony.
-- S2-03 Mutual TLS and trust revocation, no unauthenticated injection.
-- S2-04 Single versioned wire schema, lease arbitration, heartbeat/replay verification.
-- S2-05 Fail-safe Wi-Fi loss handling and security-negative tests.
-- S2-06 Decide Go service boundary based on benchmark; no redundant network state machine.
+- [x] S2.1 Portable, bounded and strictly validated manifest v1.
+- [x] S2.2 Fixed-command read-only Git inspector detects origin, HEAD SHA, branch and dirtiness.
+- [x] S2.3 Reject credential-bearing remotes, unsupported resources and oversized manifests.
+- [x] S2.4 Block on source/destination dirty/untracked state, branch or SHA mismatch.
+- [x] S2.5 Unit tests and real local Git-repo integration tests on Linux.
+- [ ] S2.6 Physical Mac path/permission audit, nested worktrees, macOS case/Unicode/whitespace matrix.
 
-## Sprint 3 — Multi-Mac topology (NOT STARTED)
+**Exit gate:** pass on two real Mac Git clones with representative dirty/conflict states and no mutation. Green Linux CI alone is insufficient.
 
-- S3-01 Stable device/display IDs, monitor hotplug, DPI transforms.
-- S3-02 A↔B↔C pointer, keyboard and remote-button state.
-- S3-03 Topology editor and config migration.
-- S3-04 Physical 3-Mac regression suite; 10-peer simulation is not physical certification.
+## Sprint 3 — Workspace Handoff (manual AirDrop/file preview; automatic one-click blocked)
 
-## Sprint 4 — Desktop app and installer (NOT STARTED)
+- [x] S3.1 CLI `capture`, `inspect`, `continue` with explicit user intent and pre-open revalidation.
+- [x] S3.2 Native SwiftUI handoff window, open/save pickers, manual AirDrop sharing and blocker view (source; macOS CI verification required).
+- [x] S3.3 Local allowlisted VS Code launch (no remote-provided commands).
+- [x] S3.4 End-to-end CLI smoke on two independent Git trees incl. conflict injection.
+- [ ] S3.5 Physical A→B transfer using AirDrop, user confirmation and macOS screenshot provenance.
+- [ ] S3.6 Automatic authenticated handoff over paired peer channel (depends Sprint 1).
 
-- S4-01 Signed macOS Menu Bar application.
-- S4-02 Pairing UI, trusted devices, revoked trust, layout persistence.
-- S4-03 Permission onboarding, safe autostart, packaged DMG.
+**Exit gate:** complete transfer/open on two Macs and then authenticated remote handoff via Sprint 1. The preview is **not** production-grade one-click multi-device handoff.
 
-## Sprint 5 — Production beta (NOT STARTED)
+## Sprint 4 — Production candidate
 
-- S5-01 Full fault-injection and soak testing.
-- S5-02 macOS hardware/OS version support matrix, p50/p95 and CPU/RSS.
-- S5-03 Threat audit, code signing/notarization and release checklist.
+- [ ] Verify macOS arm64/Intel packaging, UX accessibility and OS-version regression on physical machines.
+- [ ] Replace design mock with actual native SwiftUI screenshots in README.
+- [ ] Developer ID code signing, notarization and Gatekeeper acceptance.
+- [ ] Security assessment, data-loss regression, revocation, sleep/wake, Wi-Fi churn and end-to-end performance.
+- [ ] Public beta only after Sprint 1/2/3 gates have genuine evidence.
 
-## Future cross-platform adapters — after macOS baseline
+## Out of scope for this roadmap
 
-- Windows adapter PoC and macOS ↔ Windows interoperability.
-- Linux/X11 adapter PoC, Wayland limitations matrix, Linux ↔ macOS interoperability.
-- Protocol compatibility, keyboard/HID translation, input-layout and multi-OS regression suite.
-
-GitHub issues and PR tracking become possible when `truongbo17/inputmesh` repository is created. This local checkout has no GitHub remote yet.
+Remote input engine, arbitrary remote shell, unsaved buffer sync, automatic Git checkout/reset/pull, privileged services, production cloud services and general-purpose remote desktop.

@@ -99,4 +99,44 @@ final class WorkspaceTests: XCTestCase {
         XCTAssertTrue(dirty.repository.hasUncommittedChanges)
         XCTAssertTrue(dirty.repository.hasUntrackedFiles)
     }
+    func testRepoPathIsCaseSensitiveAndCredentialsNeverSerialized() throws {
+        let a = try manifest(origin: "https://github.com/Org/Project.git")
+        let b = try manifest(origin: "git@github.com:org/project.git")
+        let plan = try HandoffPlanner().plan(source: a, destination: b,
+                                            targetFolder: URL(fileURLWithPath: "/tmp/project"))
+        XCTAssertEqual(plan.blockers, [.differentRepository])
+        let json = String(data: try JSONEncoder().encode(a), encoding: .utf8)!
+        XCTAssertFalse(json.contains("token"))
+        XCTAssertFalse(json.contains("password"))
+    }
+
+    func testInvalidResourceCannotBecomeExecutableInstruction() throws {
+        let repo = try manifest().repository
+        for candidate in ["file:///private/tmp/x", "javascript:alert(1)",
+                          "https://guest:secret@example.com/work", "http://example.com/readme"] {
+            XCTAssertThrowsError(try WorkspaceManifest(sourceDeviceName: "Mac",
+                  repository: repo, resources: [.webURL(candidate)]), candidate)
+        }
+    }
+
+    func testCapturedManifestDoesNotIncludeSourceAbsolutePath() throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("inputmesh-confidential-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let runner = SystemGitRunner()
+        _ = try runner.run(["init", "-q", "-b", "main"], at: dir)
+        _ = try runner.run(["config", "user.email", "test@example.com"], at: dir)
+        _ = try runner.run(["config", "user.name", "Test"], at: dir)
+        _ = try runner.run(["remote", "add", "origin", "https://github.com/example/demo.git"], at: dir)
+        try "a".write(to: dir.appendingPathComponent("safe.txt"), atomically: true, encoding: .utf8)
+        _ = try runner.run(["add", "safe.txt"], at: dir)
+        _ = try runner.run(["commit", "-qm", "init"], at: dir)
+        let manifestURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: manifestURL) }
+        _ = try WorkspaceCommand.capture(repository: dir, output: manifestURL, deviceName: "Host")
+        let payload = try String(contentsOf: manifestURL, encoding: .utf8)
+        XCTAssertFalse(payload.contains(dir.path))
+        XCTAssertFalse(payload.contains("safe.txt"))
+    }
+
 }

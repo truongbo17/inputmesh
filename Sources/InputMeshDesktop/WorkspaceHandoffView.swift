@@ -8,6 +8,7 @@ import InputMeshWorkspace
 final class WorkspaceHandoffModel: ObservableObject {
     @Published var sourceFolder: URL?
     @Published var manifestFile: URL?
+    @Published var exportedManifestURL: URL?
     @Published var destinationFolder: URL?
     @Published var sourceManifest: WorkspaceManifest?
     @Published var plan: HandoffPlan?
@@ -31,11 +32,30 @@ final class WorkspaceHandoffModel: ObservableObject {
                   deviceName: Host.current().localizedName ?? "This Mac", resources: resources)
             sourceFolder = source
             sourceManifest = snapshot
+            exportedManifestURL = output
             message = "Exported metadata to \(output.lastPathComponent). Transfer this small JSON file using AirDrop or another trusted channel. No source files were copied."
             errorMessage = nil
             if snapshot.repository.hasUncommittedChanges || snapshot.repository.hasUntrackedFiles {
                 message += " WARNING: Source contains local changes; handoff cannot continue until resolved."
             }
+        } catch { errorMessage = error.localizedDescription }
+    }
+
+    func shareViaAirDrop() {
+        guard let fileURL = exportedManifestURL else { return }
+        guard let service = NSSharingService(named: .sendViaAirDrop) else {
+            errorMessage = "AirDrop is not available. Share the exported JSON manually."
+            return
+        }
+        service.perform(withItems: [fileURL])
+        message = "AirDrop opened. Confirm the receiving Mac and import the file there."
+    }
+
+    func openReference(_ text: String) {
+        guard let url = URL(string: text) else { return }
+        do {
+            try WorkspaceResource.webURL(text).validate()
+            NSWorkspace.shared.open(url)
         } catch { errorMessage = error.localizedDescription }
     }
 
@@ -112,6 +132,11 @@ struct WorkspaceHandoffView: View {
                         Button { model.chooseSourceAndExport() } label: {
                             Label("Choose Git repo and export manifest…", systemImage: "square.and.arrow.up")
                         }.buttonStyle(.borderedProminent)
+                        if model.exportedManifestURL != nil {
+                            Button { model.shareViaAirDrop() } label: {
+                                Label("Send manifest with AirDrop…", systemImage: "airplayaudio")
+                            }.buttonStyle(.bordered)
+                        }
                         if let manifest = model.sourceManifest, model.manifestFile == nil {
                             Label("\(manifest.repository.branch) · \(manifest.repository.headSHA.prefix(10))", systemImage: "checkmark.shield")
                                 .font(.callout)
@@ -138,6 +163,20 @@ struct WorkspaceHandoffView: View {
                                 ForEach(plan.blockers, id: \.self) { blocker in
                                     Label(blocker.rawValue, systemImage: "exclamationmark.triangle.fill")
                                         .foregroundStyle(.orange)
+                                }
+                            }
+                        }
+                        if let plan = model.plan, plan.canOpen, !plan.resources.isEmpty {
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text("Optional web references — open individually after review")
+                                    .font(.caption).foregroundStyle(.secondary)
+                                ForEach(plan.resources.indices, id: \.self) { index in
+                                    switch plan.resources[index] {
+                                    case .webURL(let text):
+                                        Button { model.openReference(text) } label: {
+                                            Label(text, systemImage: "globe")
+                                        }.buttonStyle(.link)
+                                    }
                                 }
                             }
                         }

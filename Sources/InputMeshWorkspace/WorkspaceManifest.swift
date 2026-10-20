@@ -130,10 +130,12 @@ public enum RepositoryAddress {
         let stripped = text.hasSuffix(".git") ? String(text.dropLast(4)) : text
         if stripped.hasPrefix("git@") {
             let s = stripped.dropFirst(4)
-            return s.replacingOccurrences(of: ":", with: "/").lowercased()
+            let components = s.split(separator: ":", maxSplits: 1, omittingEmptySubsequences: false)
+            if components.count == 2 { return components[0].lowercased() + "/" + components[1] }
+            return stripped
         }
         if let url = URLComponents(string: stripped), let host = url.host {
-            return (host + url.path).lowercased().trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+            return host.lowercased() + url.path
         }
         return stripped.lowercased()
     }

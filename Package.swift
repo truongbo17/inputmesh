@@ -22,6 +22,7 @@ var targets: [Target] = [
 #if os(macOS)
 products.append(.executable(name: "InputMeshDesktop", targets: ["InputMeshDesktop"]))
 targets.append(.executableTarget(name: "InputMeshDesktop", dependencies: ["InputMeshCore", "InputMeshPlatform", "InputMeshMacOS", "InputMeshWorkspace"]))
+targets.append(.testTarget(name: "InputMeshMacOSTests", dependencies: ["InputMeshMacOS"]))
 #endif
 
 let package = Package(
