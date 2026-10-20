@@ -4,7 +4,7 @@
 set -euo pipefail
 [[ "$(uname -s)" == "Darwin" ]] || { echo 'ERROR: macOS required' >&2; exit 2; }
 cd "$(dirname "$0")/.."
-VERSION="${INPUTMESH_VERSION:-0.1.0}"
+VERSION="${INPUTMESH_VERSION:-0.2.0}"
 BUILD_NUMBER="${GITHUB_RUN_NUMBER:-1}"
 ARCH="$(uname -m)"
 DIST="${INPUTMESH_DIST:-$PWD/dist}"
