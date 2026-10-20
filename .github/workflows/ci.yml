@@ -3,30 +3,61 @@ on:
   push:
     branches: [main, 'feat/**', 'fix/**', 'chore/**']
   pull_request:
+  workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: inputmesh-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   swift-core-linux:
-    runs-on: ubuntu-latest
+    name: Swift core · Linux
+    runs-on: ubuntu-24.04
     container: swift:6.2
     steps:
       - uses: actions/checkout@v4
-      - name: Swift core and adapter compile
+      - name: Verify Swift toolchain
+        run: swift --version
+      - name: Compile core and cross-platform contracts
         run: swift build
-      - name: Swift unit tests
+      - name: Unit tests
         run: swift test --parallel
-      - name: Optimized release compile
+      - name: Optimized build
         run: swift build -c release
-  swift-macos-compile:
-    runs-on: macos-15
+
+  macos:
+    name: Native macOS · ${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            arch: arm64
+          - os: macos-15-intel
+            arch: x86_64
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - uses: swift-actions/setup-swift@v2
-        with:
-          swift-version: '6.2'
-      - name: Native Swift compile (not physical-permission validation)
-        run: swift build
-      - name: Swift unit tests
+      - name: Verify host toolchain and architecture
+        run: |
+          sw_vers
+          xcodebuild -version
+          swift --version
+          test "$(uname -m)" = "${{ matrix.arch }}"
+      - name: Compile native app and library targets
+        run: swift build --product InputMeshDesktop
+      - name: Unit tests on macOS
         run: swift test --parallel
-      - name: Release compile
-        run: swift build -c release
+      - name: Package and verify native app (ad-hoc preview)
+        run: |
+          ./scripts/build-macos-app.sh
+          ./scripts/verify-macos-app.sh "dist/InputMesh.app" "${{ matrix.arch }}"
+      - name: Upload macOS preview artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: InputMesh-macOS-${{ matrix.arch }}-preview
+          path: |
+            dist/*.zip
+            dist/*.sha256
+          if-no-files-found: error
+          retention-days: 30
