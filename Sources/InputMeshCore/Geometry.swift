@@ -118,8 +118,22 @@ public struct ScreenTopology: Sendable {
                 gap = src.minY - r.maxY
                 overlap = min(src.maxX, r.maxX) - max(src.minX, r.minX)
             }
-            // Overlapping virtual displays are an invalid adjacency (not an edge neighbor).
-            guard gap >= -0.001, gap <= maxGap, overlap > 0 else { return nil }
+            // Only transfer along an *actual shared edge segment*. Selecting a
+            // neighboring display by overlap size alone can route the cursor to
+            // a screen that isn't beside the pointer (e.g. vertically stacked peers).
+            // Keep global tangential positions stable instead of rescaling the
+            // full source height and producing a visible jump.
+            let tangentialInOverlap: Bool
+            switch edge {
+            case .right, .left:
+                tangentialInOverlap = cursor.y >= max(src.minY, r.minY) &&
+                                      cursor.y < min(src.maxY, r.maxY)
+            case .bottom, .top:
+                tangentialInOverlap = cursor.x >= max(src.minX, r.minX) &&
+                                      cursor.x < min(src.maxX, r.maxX)
+            }
+            // Overlapping virtual displays are not edge neighbors.
+            guard gap >= -0.001, gap <= maxGap, overlap > 0, tangentialInOverlap else { return nil }
             return (candidate, max(0, gap), overlap)
         }
         guard let target = eligible.sorted(by: { a, b in
@@ -133,16 +147,14 @@ public struct ScreenTopology: Sendable {
         let p: VirtualPoint
         switch edge {
         case .right, .left:
-            let fraction = min(1, max(0, (cursor.y - src.minY) / src.height))
-            let y = dst.minY + min(dst.height - epsilon, max(0, fraction * dst.height))
+            let y = min(dst.maxY - epsilon, max(dst.minY, cursor.y))
             let overflow = edge == .right ? cursor.x - src.maxX : src.minX - cursor.x
             let x = edge == .right
                 ? min(dst.maxX - epsilon, dst.minX + max(0, overflow))
                 : max(dst.minX, dst.maxX - epsilon - max(0, overflow))
             p = VirtualPoint(x: x, y: y)
         case .bottom, .top:
-            let fraction = min(1, max(0, (cursor.x - src.minX) / src.width))
-            let x = dst.minX + min(dst.width - epsilon, max(0, fraction * dst.width))
+            let x = min(dst.maxX - epsilon, max(dst.minX, cursor.x))
             let overflow = edge == .bottom ? cursor.y - src.maxY : src.minY - cursor.y
             let y = edge == .bottom
                 ? min(dst.maxY - epsilon, dst.minY + max(0, overflow))

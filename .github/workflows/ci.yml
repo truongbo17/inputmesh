@@ -61,3 +61,38 @@ jobs:
             dist/*.sha256
           if-no-files-found: error
           retention-days: 30
+
+  publish-diagnostic-preview:
+    name: Publish clearly labeled macOS preview (NOT production)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [swift-core-linux, macos]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: InputMesh-macOS-*-preview
+          path: dist
+          merge-multiple: true
+      - name: Verify both architectures and checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f dist/InputMesh-0.1.0-macos-arm64-preview.zip
+          test -f dist/InputMesh-0.1.0-macos-x86_64-preview.zip
+          cd dist
+          for sum in *.sha256; do shasum -a 256 -c "$sum"; done
+      - name: Publish pre-release with explicit warnings
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          VERSION="v0.1.0-preview.${GITHUB_RUN_NUMBER}"
+          gh release create "$VERSION" dist/*.zip dist/*.sha256 \
+            --repo "${GITHUB_REPOSITORY}" \
+            --target "${GITHUB_SHA}" \
+            --prerelease --latest=false \
+            --title "InputMesh $VERSION · local-only diagnostic PREVIEW" \
+            --notes-file docs/preview-release-notes.md

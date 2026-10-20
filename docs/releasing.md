@@ -31,3 +31,7 @@ Pull requests and main branch run Linux core tests and native macOS tests/builds
 5. Create a tagged GitHub release only after steps 1–4 pass. Retain checksum, provenance and test evidence.
 
 **Not implemented yet:** automated Developer ID secret import, notarization and stable publish. The existence of a ZIP or GitHub CI green does NOT satisfy this gate. Never describe preview builds as notarized/production ready.
+
+## Automatic development preview
+
+Once all CI jobs on `main` succeed, the workflow publishes a GitHub **pre-release** named `v0.1.0-preview.<run>` containing the two macOS architecture ZIPs and checksums. It **does not** sign with a Developer ID or notarize anything. Only use these artifacts for development evaluation. This workflow is intentionally not called a stable release.

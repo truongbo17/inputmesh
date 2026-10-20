@@ -43,7 +43,7 @@ open dist/InputMesh.app
 
 Only grant permissions after reviewing the app's permissions explanation. This preview operates locally, exposes no network control endpoint and cannot yet connect another Mac. Its `inputmesh --probe` CLI reports counts, not typed keys or pointer coordinates.
 
-Alternatively see [Actions](https://github.com/truongbo17/inputmesh/actions) for build results and engineering ZIP artifacts when CI is successful. The ZIP is ad-hoc signed, **not** Gatekeeper-notarized; it is not a user-facing stable installer.
+Alternatively see [Releases](https://github.com/truongbo17/inputmesh/releases) for clearly marked developer previews, or [Actions](https://github.com/truongbo17/inputmesh/actions) for test reports and CI artifacts. The ZIP is ad-hoc signed, **not** Gatekeeper-notarized; it is not a user-facing stable installer.
 
 ## App navigation
 
