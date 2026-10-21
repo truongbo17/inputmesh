@@ -137,6 +137,11 @@ public final class WorkspaceTCPTransport {
                 handshakeTimer = nil
             }
             onEvent(event)
+            if case .closed = event {
+                // The peer has deliberately ended this session. Do not leave
+                // an authenticated-but-dead TCP connection accepting bytes.
+                finish(nil)
+            }
         }
     }
 
