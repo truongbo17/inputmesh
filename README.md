@@ -114,3 +114,7 @@ No root or SIP bypass, key logging or unauthenticated remote actions. A legitima
 - [Roadmap](docs/roadmap.md)
 
 License, name availability and distribution strategy must be agreed before public commercialization. No license grant is implied by the repository being publicly visible.
+
+## Physical QA before stable
+
+The manual-IP beta has macOS CI and TCP loopback evidence, **not physical two-Mac certification**. Use [the two-Mac acceptance protocol](docs/physical-mac-acceptance.md) to record security, reliability and UX checks. Keep issues #24 (peer usability), #5 (native screenshots) and #4 (Developer ID signing/notarization) open until independently verified.
