@@ -13,7 +13,9 @@ public struct WorkspaceManifest: Codable, Equatable, Sendable {
     public init(createdAt: Date = Date(), sourceDeviceName: String,
                 repository: RepositorySnapshot, resources: [WorkspaceResource] = []) throws {
         self.schemaVersion = Self.currentVersion
-        self.createdAt = createdAt
+        // ISO-8601 wire format stores whole seconds. Normalize at capture so
+        // a manifest remains value-equivalent after encode/decode.
+        self.createdAt = Date(timeIntervalSince1970: floor(createdAt.timeIntervalSince1970))
         self.sourceDeviceName = String(sourceDeviceName.prefix(128))
         self.repository = repository
         self.resources = resources
@@ -44,6 +46,13 @@ public struct WorkspaceManifest: Codable, Equatable, Sendable {
         defer { try? file.close() }
         let data = try file.read(upToCount: 64 * 1024 + 1) ?? Data()
         guard data.count <= 64 * 1024 else { throw WorkspaceError.manifestTooLarge }
+        return try decode(data)
+    }
+
+    /// In-memory decode is used only inside an authenticated encrypted channel.
+    /// Parsing remains capped and validates the same invariants as file import.
+    public static func decode(_ data: Data) throws -> WorkspaceManifest {
+        guard data.count <= 64 * 1024 else { throw WorkspaceError.manifestTooLarge }
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
         let value = try decoder.decode(Self.self, from: data)
@@ -51,14 +60,18 @@ public struct WorkspaceManifest: Codable, Equatable, Sendable {
         return value
     }
 
-    public func write(to url: URL) throws {
+    public func encodedData() throws -> Data {
         try validate()
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         encoder.dateEncodingStrategy = .iso8601
         let bytes = try encoder.encode(self)
         guard bytes.count <= 64 * 1024 else { throw WorkspaceError.manifestTooLarge }
-        try bytes.write(to: url, options: .atomic)
+        return bytes
+    }
+
+    public func write(to url: URL) throws {
+        try encodedData().write(to: url, options: .atomic)
     }
 }
 
