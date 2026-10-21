@@ -8,7 +8,7 @@
 
 ## Project status · 20 October 2026 — Workspace Handoff preview
 
-**Workspace Handoff developer preview.** This product transfers Git context manually via a JSON file, not mouse and keyboard input. It cannot yet pair Macs or send a workspace across an authenticated LAN session. No network listener is enabled.
+**Workspace Handoff developer preview.** This product transfers Git context manually via a JSON file, not mouse and keyboard input. It cannot yet pair Macs or send a workspace across an authenticated LAN session. No network listener starts automatically; a temporary one can be explicitly enabled in the experimental LAN pairing window.
 
 | Feature | Status |
 |---|---|
@@ -17,7 +17,8 @@
 | Authenticated session + Keychain peer trust | Crypto building blocks tested; **not wired to network** |
 | Cross-platform workspace wire protocol | Implemented and tested; **no listener** |
 | Native Apple Silicon + Intel preview packages | CI verified; ad-hoc signed, not notarized |
-| Actual Mac A → Mac B automatic handoff | Not implemented |
+| Experimental manual-IP encrypted Mac pairing | Implemented in beta UI; CI loopback only, physical QA pending |
+| Actual two physical Mac handoff / Bonjour discovery | Not verified / not implemented |
 | macOS Developer ID signed stable release | Not implemented |
 
 

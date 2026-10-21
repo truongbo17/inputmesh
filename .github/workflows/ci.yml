@@ -86,8 +86,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -f dist/InputMesh-0.2.0-macos-arm64-preview.zip
-          test -f dist/InputMesh-0.2.0-macos-x86_64-preview.zip
+          test -f dist/InputMesh-0.3.0-macos-arm64-preview.zip
+          test -f dist/InputMesh-0.3.0-macos-x86_64-preview.zip
           cd dist
           for sum in *.sha256; do shasum -a 256 -c "$sum"; done
       - name: Publish pre-release with explicit warnings

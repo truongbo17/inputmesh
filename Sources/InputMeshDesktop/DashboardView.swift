@@ -91,10 +91,13 @@ struct DashboardView: View {
             Button { openWindow(id: "handoff") } label: {
                 Label("Open Workspace Handoff", systemImage: "arrow.left.arrow.right.square")
             }.buttonStyle(.borderedProminent)
+            Button { openWindow(id: "lan") } label: {
+                Label("Experimental Secure LAN Handoff…", systemImage: "network")
+            }.buttonStyle(.bordered)
             HStack(spacing: 14) {
                 statCard("This Mac", value: "Local", symbol: "desktopcomputer", note: "Selected Git repositories only")
                 statCard("Transfer method", value: "AirDrop / File", symbol: "square.and.arrow.up", note: "User-approved JSON handoff")
-                statCard("Peer transport", value: "Disabled", symbol: "lock.shield", note: "Encrypted LAN pairing is not shipped")
+                statCard("Peer transport", value: "Opt-in beta", symbol: "lock.shield", note: "Manual IP · dual approval · no automatic listener")
             }
             VStack(alignment: .leading, spacing: 14) {
                 HStack {
@@ -142,7 +145,10 @@ struct DashboardView: View {
                 VStack(spacing: 10) {
                     Image(systemName: "network.slash").font(.system(size: 34)).foregroundStyle(.secondary)
                     Text("No trusted peers").font(.headline)
-                    Text("Remote discovery and automatic handoff are not enabled in this preview.")
+                    Text("Bonjour discovery is not available. Experimental encrypted pairing by manual LAN IP requires explicit action on both Macs.")
+                    Button { openWindow(id: "lan") } label: {
+                        Label("Open LAN Pairing Beta", systemImage: "network")
+                    }.buttonStyle(.bordered)
                         .foregroundStyle(.secondary)
                 }.frame(maxWidth: .infinity, minHeight: 190)
             }.panel()
@@ -177,7 +183,7 @@ struct DashboardView: View {
                 Divider()
                 Label("No automatic remote commands", systemImage: "lock.shield")
                     .font(.headline)
-                Text("No LAN listener, remote shell, source-file transfer, checkout, pull or reset is enabled in this preview.")
+                Text("No listener starts automatically, and no remote shell, source-file transfer, checkout, pull or reset is enabled. An experimental LAN pairing window requires explicit user consent.")
                 Divider()
                 Label("Manual JSON is not encrypted", systemImage: "doc.text")
                     .font(.headline)
@@ -191,7 +197,7 @@ struct DashboardView: View {
             VStack(alignment: .leading, spacing: 12) {
                 Label("Workspace Handoff developer preview", systemImage: "hammer").font(.headline)
                 Text("Available: manual Git manifest export/import, conflict checks and explicit local VS Code open.")
-                Text("Not available: automatic LAN handoff, device pairing or notarized stable installer.")
+                Text("Experimental: manual-IP encrypted LAN handoff, requiring both users to compare and approve SAS. No hardware certification or notarized stable installer yet.")
                 Text("Source: github.com/truongbo17/inputmesh")
             }.panel()
         }

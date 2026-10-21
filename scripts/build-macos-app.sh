@@ -4,7 +4,7 @@
 set -euo pipefail
 [[ "$(uname -s)" == "Darwin" ]] || { echo 'ERROR: macOS required' >&2; exit 2; }
 cd "$(dirname "$0")/.."
-VERSION="${INPUTMESH_VERSION:-0.2.0}"
+VERSION="${INPUTMESH_VERSION:-0.3.0}"
 BUILD_NUMBER="${GITHUB_RUN_NUMBER:-1}"
 ARCH="$(uname -m)"
 DIST="${INPUTMESH_DIST:-$PWD/dist}"
@@ -34,6 +34,7 @@ plist = {
     'LSMinimumSystemVersion':'13.0',
     'NSHighResolutionCapable':True,
     'LSApplicationCategoryType':'public.app-category.utilities',
+    'NSLocalNetworkUsageDescription':'InputMesh uses your local network only when you explicitly start secure workspace pairing with another Mac.',
     'NSHumanReadableCopyright':'Copyright 2026 InputMesh contributors',
 }
 with open(sys.argv[1], 'wb') as f: plistlib.dump(plist, f)
