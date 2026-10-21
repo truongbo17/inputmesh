@@ -51,6 +51,10 @@ public final class WorkspaceConsentCoordinator {
 
     public var phase: WorkspaceWirePolicy.Phase { policy.phase }
     public var isReady: Bool { policy.maySendWorkspace }
+    /// Exposes the peer signing identity ONLY after mutual encrypted consent.
+    public var verifiedPeerPublicKey: Data? {
+        isReady ? peerHello?.identityPublicKey : nil
+    }
 
     public func begin() throws -> WorkspaceWireEnvelope {
         guard !started, phase == .awaitingHello else { throw WorkspaceConsentError.invalidState }

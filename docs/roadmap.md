@@ -1,51 +1,43 @@
-# InputMesh product roadmap — Cross-Device Workspace (2026-10-20)
+# InputMesh — Workspace Handoff roadmap
 
-**Decision:** stop competing with Deskflow as a mouse/keyboard sharing application. InputMesh concentrates on **Continue Workspace on Another Device**. Source packages from the original input-control spike are kept for reference, not presented as a production feature.
+Scope: developer Git-context handoff across Macs, later Windows/Linux. The historic mouse/keyboard-sharing experiment is retired; Deskflow already serves that category.
 
-The sprints below have strictly ordered gates. Source written and green CI is not equivalent to a physical cross-Mac user journey.
+## Sprint 1 — Trusted peer foundation (implementation partial, acceptance BLOCKED)
 
-## Sprint 1 — Trusted Device Foundation (PARTIAL; blocked for completion)
+- [x] CryptoKit Ed25519 signing identity, device-local Keychain key storage, ephemeral X25519 agreement.
+- [x] Transcript-bound signatures, SAS verification, HKDF directional keys, authenticated encryption, replay/order checks.
+- [x] Deferred Keychain trust persistence until **both** sides approve and remote encrypted ACK verifies; active-channel revocation.
+- [x] Bounded Network.framework TCP adapter; two independent peers exchange an encrypted inert manifest on *real localhost TCP* in macOS CI.
+- [x] Experimental opt-in manual-IP pairing SwiftUI: temporary listener, user code comparison, source and destination confirmation.
+- [ ] Bonjour discovery and accurate Local Network permissions onboarding across supported macOS versions.
+- [ ] Admission/rate caps, network DoS/sleep/wake/reconnect recovery and cancel active socket on trust revocation.
+- [ ] **Physical two-Mac acceptance** and external security audit.
 
-- [x] S1.1 Define trust boundaries, fingerprint and pairing strategy.
-- [x] S1.2 Native CryptoKit Curve25519 identity, Keychain persistence module (source; macOS CI verification required).
-- [x] S1.3 Signed challenge verification, deterministic human comparison code and negative cryptographic tests (source; CI verification required).
-- [ ] S1.4 Bonjour discovery service and Local Network permission onboarding.
-- [ ] S1.5 Bidirectional explicit user consent for identity pairing.
-- [ ] S1.6 Bind peer public keys and proof-of-possession to end-to-end encrypted session, version/replay limits and revocation.
-- [ ] S1.7 Physical test on **two Macs**: compare SAS out-of-band, accept/reject and revoke trust; verify unauthorized peer rejected.
+Gate: remains **OPEN**. Successful loopback CI does not prove physical two-Mac pairing.
 
-**Exit gate:** authenticated and encrypted connection between two Macs, physically verified. Keychain identity/cryptography alone does NOT satisfy the gate.
+## Sprint 2 — Git workspace integrity (portable implementation complete, physical QA OPEN)
 
-## Sprint 2 — Workspace Context (portable implementation; physical acceptance pending)
+- [x] Versioned bounded JSON manifest, Git origin/branch/SHA and dirty/untracked state.
+- [x] Reject credentialed remotes, unsupported resources, oversized files and distinct HTTPS ports.
+- [x] Reject source/destination mismatch; no checkout/reset/pull/clone on behalf of user.
+- [x] Revalidate existing destination and open an explicitly chosen local editor only on a clean exact match.
+- [x] Linux/macOS unit tests and temporary Git working tree E2E smoke.
+- [ ] Multiple physical Mac Git clones, Unicode/case/whitespace/worktrees and unsaved-editor UX QA.
 
-- [x] S2.1 Portable, bounded and strictly validated manifest v1.
-- [x] S2.2 Fixed-command read-only Git inspector detects origin, HEAD SHA, branch and dirtiness.
-- [x] S2.3 Reject credential-bearing remotes, unsupported resources and oversized manifests.
-- [x] S2.4 Block on source/destination dirty/untracked state, branch or SHA mismatch.
-- [x] S2.5 Unit tests and real local Git-repo integration tests on Linux.
-- [ ] S2.6 Physical Mac path/permission audit, nested worktrees, macOS case/Unicode/whitespace matrix.
+## Sprint 3 — Workspace Handoff UI (manual and beta implemented, production gate OPEN)
 
-**Exit gate:** pass on two real Mac Git clones with representative dirty/conflict states and no mutation. Green Linux CI alone is insufficient.
+- [x] Native SwiftUI local manifest export/import + manual AirDrop.
+- [x] Optional encrypted manual-IP LAN handoff beta behind explicit two-sided approval.
+- [x] Receiver reviews inert manifest metadata and selects existing clean destination; no automatic execution.
+- [ ] Bonjour device selection and polished connect/revoke state UX.
+- [ ] Real two-Mac A→B acceptance across Apple Silicon and Intel, Wi-Fi loss, sleep/wake and permissions.
 
-## Sprint 3 — Workspace Handoff (manual AirDrop/file preview; automatic one-click blocked)
+## Sprint 4 — Production release (BLOCKED)
 
-- [x] S3.1 CLI `capture`, `inspect`, `continue` with explicit user intent and pre-open revalidation.
-- [x] S3.2 Native SwiftUI handoff window, open/save pickers, manual AirDrop sharing and blocker view (source; macOS CI verification required).
-- [x] S3.3 Local allowlisted VS Code launch (no remote-provided commands).
-- [x] S3.4 End-to-end CLI smoke on two independent Git trees incl. conflict injection.
-- [ ] S3.5 Physical A→B transfer using AirDrop, user confirmation and macOS screenshot provenance.
-- [ ] S3.6 Automatic authenticated handoff over paired peer channel (depends Sprint 1).
+- [x] GitHub CI for Linux portable core and native macOS arm64/x86_64 packages.
+- [ ] Independent threat-model/cryptography review, privacy and dependency audit.
+- [ ] Real native UI screenshots, keyboard-only/VoiceOver and supported macOS runtime matrix.
+- [ ] Developer ID Application signing, Hardened Runtime, notarization, Gatekeeper assessment and stapling.
+- [ ] Hardware-soak evidence, reliability targets, honest release attestation per 13-gate Workspace release model.
 
-**Exit gate:** complete transfer/open on two Macs and then authenticated remote handoff via Sprint 1. The preview is **not** production-grade one-click multi-device handoff.
-
-## Sprint 4 — Production candidate
-
-- [ ] Verify macOS arm64/Intel packaging, UX accessibility and OS-version regression on physical machines.
-- [ ] Replace design mock with actual native SwiftUI screenshots in README.
-- [ ] Developer ID code signing, notarization and Gatekeeper acceptance.
-- [ ] Security assessment, data-loss regression, revocation, sleep/wake, Wi-Fi churn and end-to-end performance.
-- [ ] Public beta only after Sprint 1/2/3 gates have genuine evidence.
-
-## Out of scope for this roadmap
-
-Remote input engine, arbitrary remote shell, unsaved buffer sync, automatic Git checkout/reset/pull, privileged services, production cloud services and general-purpose remote desktop.
+Do NOT tag a stable release until all outstanding gates have reviewable evidence. Current versions are **ad-hoc-signed experimental previews** only.

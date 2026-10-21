@@ -19,3 +19,7 @@ An authenticated network pairing UI must not become available until the entire m
 ## Real native screenshot gate
 
 The dashboard image in docs/assets/dashboard-design-preview.png is a historical design reference, not a screenshot of the installed native app. Issue #5 tracks a real Mac capture, light/dark mode, VoiceOver, keyboard-only navigation, 900×610 minimum dashboard, high-contrast and Retina checks. CI compilation alone is insufficient.
+
+## Experimental LAN pairing window
+
+Users explicitly start a 2-minute listener (TCP port 48437) on the receiving Mac; the sender enters its LAN IP. Each Mac independently displays a handshake-derived SAS and must be approved by a person; no code is automatically confirmed in the app. Only encrypted, validated Git manifest metadata is delivered and the receiving person must select an existing clone. A mismatched branch/SHA or dirty working tree blocks opening. There is no Bonjour discovery yet. Close/revoke must tear down the active transport; physical verification is pending.

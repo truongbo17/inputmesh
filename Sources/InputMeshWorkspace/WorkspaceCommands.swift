@@ -21,7 +21,14 @@ public enum WorkspaceCommand {
     }
 
     public static func continueOnThisDevice(manifestURL: URL, destination: URL) throws -> HandoffPlan {
-        let plan = try inspect(manifestURL: manifestURL, destination: destination)
+        try continueWithManifest(WorkspaceManifest.load(manifestURL), destination: destination)
+    }
+
+    /// In-memory manifests can only originate from a validated encrypted peer
+    /// message. No temporary plaintext JSON file is required on the receiver.
+    public static func continueWithManifest(_ manifest: WorkspaceManifest,
+                                             destination: URL) throws -> HandoffPlan {
+        let plan = try WorkspaceHandoff.prepare(source: manifest, destinationFolder: destination)
         guard plan.canOpen else { return plan }
         #if os(macOS)
         // Deliberately do not execute editor/terminal commands from manifest. Always invoke

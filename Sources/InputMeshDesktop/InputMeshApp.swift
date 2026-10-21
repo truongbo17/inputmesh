@@ -28,12 +28,18 @@ struct InputMeshApp: App {
         }
         .defaultSize(width: 750, height: 670)
 
+        Window("Secure LAN Handoff · Beta", id: "lan") {
+            WorkspaceLANView()
+        }
+        .defaultSize(width: 860, height: 740)
+
         MenuBarExtra("InputMesh", systemImage: "arrow.left.arrow.right.square") {
             Text("InputMesh · Workspace preview")
-            Text("Manual manifest transfer only · no LAN listener")
+            Text("LAN pairing is opt-in; no listener starts automatically")
                 .foregroundStyle(.secondary)
             Divider()
             Button("Open Workspace Handoff") { openWindow(id: "handoff") }
+            Button("Experimental LAN Pairing…") { openWindow(id: "lan") }
             Button("Open Dashboard") { openWindow(id: "dashboard") }
             Button("Refresh Local Status") { appModel.refresh() }
             Divider()

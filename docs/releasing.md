@@ -16,7 +16,7 @@ swift test --parallel
 ./scripts/verify-macos-app.sh dist/InputMesh.app "$(uname -m)"
 ```
 
-Output: `dist/InputMesh-0.2.0-macos-{arm64|x86_64}-preview.zip`, matching SHA-256, plus `dist/InputMesh.app`.
+Output: `dist/InputMesh-0.3.0-macos-{arm64|x86_64}-preview.zip`, matching SHA-256, plus `dist/InputMesh.app`.
 
 ## GitHub CI
 
@@ -36,4 +36,4 @@ The release model is Sources/InputMeshCore/ReleaseGate.swift (schema 2). Every g
 
 ## Automatic development preview
 
-Once CI jobs on main pass, the workflow publishes a GitHub pre-release named v0.2.0-preview.<run> with two macOS architecture ZIPs and SHA-256 files. Preview ZIPs are ad-hoc signed and not notarized.
+Once CI jobs on main pass, the workflow publishes a GitHub pre-release named v0.3.0-preview.<run> with two macOS architecture ZIPs and SHA-256 files. Preview ZIPs are ad-hoc signed and not notarized.
