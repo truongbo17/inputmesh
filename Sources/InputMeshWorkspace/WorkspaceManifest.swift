@@ -13,7 +13,9 @@ public struct WorkspaceManifest: Codable, Equatable, Sendable {
     public init(createdAt: Date = Date(), sourceDeviceName: String,
                 repository: RepositorySnapshot, resources: [WorkspaceResource] = []) throws {
         self.schemaVersion = Self.currentVersion
-        self.createdAt = createdAt
+        // ISO-8601 wire format stores whole seconds. Normalize at capture so
+        // a manifest remains value-equivalent after encode/decode.
+        self.createdAt = Date(timeIntervalSince1970: floor(createdAt.timeIntervalSince1970))
         self.sourceDeviceName = String(sourceDeviceName.prefix(128))
         self.repository = repository
         self.resources = resources

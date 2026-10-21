@@ -85,6 +85,15 @@ final class WorkspaceConsentCoordinatorTests: XCTestCase {
         XCTAssertTrue(try p.storeA.isTrusted(p.keyB))
     }
 
+    func testManifestTimestampRoundTripIsCanonical() throws {
+        let timestamp = Date(timeIntervalSince1970: 1_700_000_000.789)
+        let snapshot = try WorkspaceManifest(createdAt: timestamp, sourceDeviceName: "Mac A",
+            repository: RepositorySnapshot(origin: "https://github.com/example/project.git",
+                branch: "main", headSHA: sha, hasUncommittedChanges: false, hasUntrackedFiles: false))
+        XCTAssertEqual(snapshot.createdAt.timeIntervalSince1970, 1_700_000_000)
+        XCTAssertEqual(try WorkspaceManifest.decode(snapshot.encodedData()), snapshot)
+    }
+
     func testCompleteManifestHandoffIsInertAndBoundToSession() throws {
         let p = try approved()
         let m = try manifest()
