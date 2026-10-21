@@ -16,6 +16,7 @@ final class WorkspaceLANModel: ObservableObject {
     @Published var remoteHost = ""
     @Published private(set) var message = "Start a temporary listener on Mac B, then enter its LAN IP on Mac A."
     @Published private(set) var pairingCode: String?
+    @Published private(set) var approvalSent = false
     @Published private(set) var connected = false
     @Published private(set) var listening = false
     @Published private(set) var incomingManifest: WorkspaceManifest?
@@ -30,6 +31,7 @@ final class WorkspaceLANModel: ObservableObject {
     private var transport: WorkspaceTCPTransport?
     private var coordinator: WorkspaceConsentCoordinator?
     private var peerPublicKey: Data?
+    private var sessionGeneration = UUID()
 
     func startListening() {
         guard listener == nil, transport == nil else { return }
@@ -111,23 +113,31 @@ final class WorkspaceLANModel: ObservableObject {
     }
 
     private func attach(connection: NWConnection, role: WorkspaceSessionRole) throws {
+        let generation = UUID()
+        sessionGeneration = generation
         let identity = try MacDeviceIdentity.loadOrCreateInKeychain()
         let coordinator = try WorkspaceConsentCoordinator(identity: identity, role: role, trustStore: trustStore)
         self.coordinator = coordinator
         let transport = WorkspaceTCPTransport(connection: connection, coordinator: coordinator,
             onEvent: { [weak self] event in
-                DispatchQueue.main.async { [weak self] in self?.handle(event) }
+                DispatchQueue.main.async { [weak self] in
+                    guard let self, self.sessionGeneration == generation else { return }
+                    self.handle(event)
+                }
             }, onError: { [weak self] error in
                 DispatchQueue.main.async { [weak self] in
-                    self?.errorMessage = "Secure session ended: \(error.localizedDescription)"
-                    self?.connected = false
-                    self?.pairingCode = nil
-                    self?.transport = nil
-                    self?.coordinator = nil
+                    guard let self, self.sessionGeneration == generation else { return }
+                    self.errorMessage = "Secure session ended: \(error.localizedDescription)"
+                    self.connected = false
+                    self.pairingCode = nil
+                    self.approvalSent = false
+                    self.transport = nil
+                    self.coordinator = nil
                 }
             })
         self.transport = transport
         pairingCode = nil
+        approvalSent = false
         connected = false
         errorMessage = nil
         message = "Connecting. Verify the pairing code independently on both Macs."
@@ -137,11 +147,13 @@ final class WorkspaceLANModel: ObservableObject {
     private func handle(_ event: WorkspaceConsentEvent) {
         switch event {
         case .pairingCode(let code):
+            approvalSent = false
             pairingCode = code
             message = "Compare this code on both Macs. Approve only if the code matches exactly."
         case .ready:
             connected = true
             pairingCode = nil
+            approvalSent = false
             peerPublicKey = coordinator?.verifiedPeerPublicKey
             message = "Both Macs approved. You may send a clean Git workspace manifest."
         case .manifest(let manifest):
@@ -161,6 +173,8 @@ final class WorkspaceLANModel: ObservableObject {
 
     func approvePairing() {
         guard let pairingCode, let transport else { return }
+        guard !approvalSent else { return }
+        approvalSent = true
         transport.approveMatchingCode(pairingCode)
         message = "Local approval sent. Waiting for the other Mac's encrypted approval."
     }
@@ -223,12 +237,14 @@ final class WorkspaceLANModel: ObservableObject {
     }
 
     func disconnect() {
+        sessionGeneration = UUID()
         transport?.stop()
         transport = nil
         coordinator = nil
         stopListening()
         connected = false
         pairingCode = nil
+        approvalSent = false
         peerPublicKey = nil
         incomingManifest = nil
         plan = nil
@@ -270,6 +286,7 @@ struct WorkspaceLANView: View {
                                 .foregroundStyle(.secondary)
                             Button("Codes match — approve this Mac") { model.approvePairing() }
                                 .buttonStyle(.borderedProminent)
+                                .disabled(model.approvalSent)
                         }
                         if model.connected {
                             Label("Mutually authenticated encrypted session", systemImage: "checkmark.shield.fill")

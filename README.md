@@ -8,7 +8,7 @@
 
 ## Project status · 20 October 2026 — Workspace Handoff preview
 
-**Workspace Handoff developer preview.** This product transfers Git context manually via a JSON file, not mouse and keyboard input. It cannot yet pair Macs or send a workspace across an authenticated LAN session. No network listener starts automatically; a temporary one can be explicitly enabled in the experimental LAN pairing window.
+**Workspace Handoff developer preview.** This product transfers Git context manually via a JSON file, not mouse and keyboard input. It includes an experimental manual-IP encrypted LAN pairing workflow behind explicit two-sided human approval. The connection is tested on loopback only, **not certified between two physical Macs**. No listener starts automatically; a temporary one can be enabled in the beta window.
 
 | Feature | Status |
 |---|---|
@@ -28,7 +28,7 @@
 
 **Partial security foundation:** native macOS identity generation, Keychain support and signed challenge primitives (not authenticated transport).
 
-**Not implemented:** secure peer discovery, encrypted pairing, automatic remote handoff, transfer of changed files, background listener and fully automated one-click workspace continuation. These remain separate production gates.
+**Not implemented:** Bonjour peer discovery, hardware-certified automatic connection, synchronization of modified source files, background listener and fully automated one-click continuation. Manual-IP encrypted peer handoff exists as an experimental beta only. These remain separate production gates.
 
 ```bash
 swift build && swift test --parallel
@@ -64,7 +64,7 @@ swift test --parallel
 open dist/InputMesh.app
 ```
 
-Workspace Handoff does not require Accessibility or Input Monitoring permissions. The legacy Quartz probe is a separate developer diagnostic; no permission needs to be granted to export/import a Git manifest. The preview has no network listener. Its `inputmesh --probe` CLI reports counts, not typed keys or pointer coordinates.
+Workspace Handoff does not require Accessibility or Input Monitoring permissions. The legacy Quartz probe is a separate developer diagnostic; no permission needs to be granted to export/import a Git manifest. No listener starts by default; the experimental beta can open a temporary listener after explicit action. Its `inputmesh --probe` CLI reports counts, not typed keys or pointer coordinates.
 
 Alternatively see [Releases](https://github.com/truongbo17/inputmesh/releases) for clearly marked developer previews, or [Actions](https://github.com/truongbo17/inputmesh/actions) for test reports and CI artifacts. The ZIP is ad-hoc signed, **not** Gatekeeper-notarized; it is not a user-facing stable installer.
 

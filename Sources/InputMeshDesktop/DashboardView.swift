@@ -56,7 +56,7 @@ struct DashboardView: View {
                 VStack(alignment: .leading, spacing: 5) {
                     Label("Local preview", systemImage: "checkmark.shield")
                         .foregroundStyle(.green).font(.caption.weight(.semibold))
-                    Text("No network listener or remote commands")
+                    Text("No listener by default · no remote commands")
                         .font(.caption2).foregroundStyle(.secondary)
                 }
                 .padding(12)
