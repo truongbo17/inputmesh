@@ -27,9 +27,6 @@ private final class TCPTestReference {
 final class WorkspaceTCPLoopbackTests: XCTestCase {
     func testTwoIndependentPeersExchangeOnlyEncryptedManifestOverRealTCP() throws {
         let received = expectation(description: "Validated encrypted Git manifest delivered via TCP")
-        let noError = expectation(description: "No transport error")
-        noError.isInverted = true
-
         let source = try WorkspaceManifest(createdAt: Date(timeIntervalSince1970: 0),
             sourceDeviceName: "Simulated Mac A",
             repository: RepositorySnapshot(origin: "https://github.com/example/project.git",
@@ -62,7 +59,6 @@ final class WorkspaceTCPLoopbackTests: XCTestCase {
                     }
                 }, onError: { error in
                     XCTFail("Responder transport error: \(error)")
-                    noError.fulfill()
                 })
             serverRef.transport = transport
             transport.start()
@@ -83,7 +79,6 @@ final class WorkspaceTCPLoopbackTests: XCTestCase {
                     }
                 }, onError: { error in
                     XCTFail("Initiator transport error: \(error)")
-                    noError.fulfill()
                 })
             clientRef.transport = transport
             transport.start()
