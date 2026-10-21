@@ -11,7 +11,7 @@ private enum UIStyle {
 private enum DashboardPage: String, CaseIterable, Identifiable {
     case overview = "Overview"
     case devices = "Devices"
-    case layout = "Screen Layout"
+    case handoff = "Handoff Guide"
     case security = "Security"
     case about = "About"
     var id: String { rawValue }
@@ -19,7 +19,7 @@ private enum DashboardPage: String, CaseIterable, Identifiable {
         switch self {
         case .overview: "square.grid.2x2"
         case .devices: "desktopcomputer"
-        case .layout: "rectangle.3.group"
+        case .handoff: "arrow.left.arrow.right.square"
         case .security: "lock.shield"
         case .about: "info.circle"
         }
@@ -37,12 +37,12 @@ struct DashboardView: View {
                 Label {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("InputMesh").font(.headline.weight(.bold))
-                        Text("ONE INPUT · EVERY DESKTOP")
+                        Text("CONTINUE YOUR WORKSPACE")
                             .font(.system(size: 9, weight: .semibold, design: .rounded))
                             .foregroundStyle(.secondary)
                     }
                 } icon: {
-                    Image(systemName: "cursorarrow.rays")
+                    Image(systemName: "arrow.left.arrow.right.square")
                         .font(.title2).foregroundStyle(UIStyle.accent)
                 }
                 .padding(.horizontal, 9)
@@ -54,9 +54,9 @@ struct DashboardView: View {
                 .listStyle(.sidebar)
                 Spacer()
                 VStack(alignment: .leading, spacing: 5) {
-                    Label("Local mode", systemImage: "checkmark.shield")
+                    Label("Local preview", systemImage: "checkmark.shield")
                         .foregroundStyle(.green).font(.caption.weight(.semibold))
-                    Text("No remote input is accepted")
+                    Text("No network listener or remote commands")
                         .font(.caption2).foregroundStyle(.secondary)
                 }
                 .padding(12)
@@ -72,7 +72,7 @@ struct DashboardView: View {
                     switch page {
                     case .overview: overview
                     case .devices: devices
-                    case .layout: layout
+                    case .handoff: handoffGuide
                     case .security: security
                     case .about: about
                     }
@@ -92,15 +92,15 @@ struct DashboardView: View {
                 Label("Open Workspace Handoff", systemImage: "arrow.left.arrow.right.square")
             }.buttonStyle(.borderedProminent)
             HStack(spacing: 14) {
-                statCard("Local computer", value: "1", symbol: "desktopcomputer", note: "Available for diagnostics")
-                statCard("Trusted devices", value: "0", symbol: "link", note: "Pairing is not available yet")
-                statCard("Control state", value: "Local", symbol: "cursorarrow", note: "Input stays on this Mac")
+                statCard("This Mac", value: "Local", symbol: "desktopcomputer", note: "Selected Git repositories only")
+                statCard("Transfer method", value: "AirDrop / File", symbol: "square.and.arrow.up", note: "User-approved JSON handoff")
+                statCard("Peer transport", value: "Disabled", symbol: "lock.shield", note: "Encrypted LAN pairing is not shipped")
             }
             VStack(alignment: .leading, spacing: 14) {
                 HStack {
                     Text("Your workspace").font(.title3.weight(.semibold))
                     Spacer()
-                    Text("PREVIEW · NO REMOTE CONTROL").font(.caption2.weight(.bold))
+                    Text("MANUAL WORKSPACE HANDOFF").font(.caption2.weight(.bold))
                         .foregroundStyle(UIStyle.subtle)
                 }
                 HStack(alignment: .center, spacing: 16) {
@@ -116,16 +116,17 @@ struct DashboardView: View {
                                 Image(systemName: "plus.circle.dashed").font(.title2)
                                 Text("Another Mac")
                                     .font(.subheadline.weight(.medium))
-                                Text("Pairing in a future build")
+                                Text("Automatic pairing not available")
                                     .font(.caption2)
                             }.foregroundStyle(.secondary)
                         }
                 }
-                Text("Input is never sent to unpaired devices. This preview cannot control another Mac.")
+                Text("Capture Git metadata, transfer it manually, inspect an existing clean clone and explicitly open VS Code. No source files or unsaved buffers are transferred.")
                     .font(.caption).foregroundStyle(.secondary)
             }
             .panel()
-            permissionPanel
+            Label("No Accessibility or Input Monitoring permission is required for Workspace Handoff.", systemImage: "lock.shield")
+                .font(.callout).foregroundStyle(.secondary)
         }
     }
 
@@ -141,86 +142,60 @@ struct DashboardView: View {
                 VStack(spacing: 10) {
                     Image(systemName: "network.slash").font(.system(size: 34)).foregroundStyle(.secondary)
                     Text("No trusted peers").font(.headline)
-                    Text("Encrypted pairing and multi-device control are under development.")
+                    Text("Remote discovery and automatic handoff are not enabled in this preview.")
                         .foregroundStyle(.secondary)
                 }.frame(maxWidth: .infinity, minHeight: 190)
             }.panel()
         }
     }
 
-    private var layout: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            heading("Screen layout", subtitle: "Arrange your displays when pairing becomes available.")
-            VStack(spacing: 14) {
-                Text("Topology preview").font(.headline)
-                MacTile(title: model.currentHost, description: "Current display owner", active: true)
-                    .frame(maxWidth: 370)
-                Text("Multi-display editing is planned. No devices are connected in this build.")
-                    .font(.callout).foregroundStyle(.secondary)
-            }.frame(maxWidth: .infinity).padding(40).panel()
-        }
-    }
-
-    private var security: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            heading("Security & privacy", subtitle: "Your keyboard input must remain under your control.")
-            permissionPanel
+    private var handoffGuide: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            heading("Handoff guide", subtitle: "Safely continue an existing Git project on another Mac.")
             VStack(alignment: .leading, spacing: 14) {
-                Label("Remote input disabled", systemImage: "lock.shield.fill")
-                    .font(.headline).foregroundStyle(.green)
-                Text("This preview does not listen on the network or accept remote events. Future versions will require an explicitly trusted peer and an authenticated, encrypted session.")
-                Text("The passive diagnostic probe records event counts only; it does not store text, key codes, or cursor coordinates.")
-                    .foregroundStyle(.secondary)
+                Label("1 · Export", systemImage: "square.and.arrow.up")
+                Text("Select a local Git repository and save its JSON manifest outside the repository.")
+                Label("2 · Transfer", systemImage: "arrow.left.arrow.right")
+                Text("Use AirDrop or a trusted file-transfer channel; manifests are not encrypted.")
+                Label("3 · Validate", systemImage: "checkmark.shield")
+                Text("On the destination Mac select an existing clone. Dirty worktrees, different branches or commits block handoff.")
+                Label("4 · Continue", systemImage: "arrow.up.right.square")
+                Text("Explicitly open the matching project in Visual Studio Code. Git is never automatically reset or pulled.")
+                Button { openWindow(id: "handoff") } label: {
+                    Label("Open Workspace Handoff", systemImage: "arrow.left.arrow.right.square")
+                }.buttonStyle(.borderedProminent)
             }.panel()
         }
     }
-
-    private var about: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            heading("About InputMesh", subtitle: "One input. Every desktop.")
+    private var security: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            heading("Privacy & security", subtitle: "Local-first Git context without privileged keyboard access.")
             VStack(alignment: .leading, spacing: 12) {
-                Label("Native macOS diagnostic preview", systemImage: "hammer")
+                Label("No keyboard monitoring needed", systemImage: "keyboard")
                     .font(.headline)
-                Text("Status: development preview · Cross-device control is NOT available")
-                Text("Architecture: Swift core, cross-platform contracts, macOS Quartz adapter")
+                Text("Workspace Handoff reads Git metadata from a folder you explicitly select. It does not need Accessibility or Input Monitoring permissions.")
+                Divider()
+                Label("No automatic remote commands", systemImage: "lock.shield")
+                    .font(.headline)
+                Text("No LAN listener, remote shell, source-file transfer, checkout, pull or reset is enabled in this preview.")
+                Divider()
+                Label("Manual JSON is not encrypted", systemImage: "doc.text")
+                    .font(.headline)
+                Text("Git origin, branch, commit and optional HTTPS links may reveal private project metadata; share only via a trusted channel.")
+            }.panel()
+        }
+    }
+    private var about: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            heading("About InputMesh", subtitle: "Continue your workspace on another device.")
+            VStack(alignment: .leading, spacing: 12) {
+                Label("Workspace Handoff developer preview", systemImage: "hammer").font(.headline)
+                Text("Available: manual Git manifest export/import, conflict checks and explicit local VS Code open.")
+                Text("Not available: automatic LAN handoff, device pairing or notarized stable installer.")
                 Text("Source: github.com/truongbo17/inputmesh")
             }.panel()
         }
     }
-
-    private var permissionPanel: some View {
-        VStack(alignment: .leading, spacing: 15) {
-            HStack {
-                Text("Device readiness").font(.title3.weight(.semibold))
-                Spacer()
-                Button { model.refresh() } label: { Label("Refresh", systemImage: "arrow.clockwise") }
-                    .buttonStyle(.bordered)
-            }
-            HStack(spacing: 12) {
-                Image(systemName: model.accessibilityAllowed ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
-                    .font(.title2)
-                    .foregroundStyle(model.accessibilityAllowed ? .green : .orange)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("Accessibility permission").font(.subheadline.weight(.semibold))
-                    Text(model.accessibilityAllowed ? "Granted to the current process" : "Not granted to the current process")
-                        .font(.caption).foregroundStyle(.secondary)
-                }
-                Spacer()
-                Button("Open Settings") { model.openAccessibilitySettings() }
-                    .buttonStyle(.borderedProminent)
-            }
-            Divider()
-            HStack(alignment: .top, spacing: 12) {
-                Image(systemName: "info.circle").foregroundStyle(UIStyle.accent)
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Input Monitoring").font(.subheadline.weight(.semibold))
-                    Text("This permission must be checked in System Settings and validated using the passive native probe; it cannot be inferred from Accessibility alone.")
-                        .font(.caption).foregroundStyle(.secondary)
-                }
-            }
-        }.panel()
-    }
-
     private func heading(_ title: String, subtitle: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title).font(.system(size: 29, weight: .bold, design: .rounded))

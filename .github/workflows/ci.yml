@@ -18,6 +18,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Verify Swift toolchain
         run: swift --version
+      - name: Validate Workspace Handoff copy
+        run: bash ./scripts/check-workspace-product-copy.sh
       - name: Compile core and cross-platform contracts
         run: swift build
       - name: Unit tests

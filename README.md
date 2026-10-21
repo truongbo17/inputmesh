@@ -2,23 +2,24 @@
 
 > **Continue your workspace on another device.** An open, local-first handoff tool for developers. The former cross-computer cursor concept is archived in history; Deskflow covers that market.
 
-![InputMesh dashboard design reference — not a native macOS screenshot](docs/assets/dashboard-design-preview.png)
+![InputMesh early design reference — not a screenshot of the running macOS application](docs/assets/dashboard-design-preview.png)
 
 > **Visual status:** the image is an explicitly labeled **UI design reference** made from an HTML layout. The matching interface is implemented in SwiftUI, but no screenshot of the real macOS app has been validated yet. See [UX specification](docs/ui-ux.md).
 
 ## Project status · 20 October 2026 — Workspace Handoff preview
 
-**Workspace Handoff developer preview, not Universal Control functionality.** This codebase is under active development; do not install expecting functional cross-Mac control. Native input capture/injection and OS authorization are not yet verified on physical Macs. Security is fail-closed for remote input: no listener or unpaired remote control is exposed by the app.
+**Workspace Handoff developer preview.** This product transfers Git context manually via a JSON file, not mouse and keyboard input. It cannot yet pair Macs or send a workspace across an authenticated LAN session. No network listener is enabled.
 
-| Feature | State |
+| Feature | Status |
 |---|---|
-| Shared topology, session model, replay/pressed-state checks | Implemented & unit-tested |
-| macOS Quartz passive input probe / injector | Implemented as diagnostic adapters; physical verification pending |
-| Native SwiftUI desktop + menu bar / permission onboarding | Implemented; native build/test pending |
-| macOS Apple Silicon and Intel native CI + ZIP packaging | Workflow implemented; CI evidence pending |
-| Encrypted discovery/pairing, cross-Mac control, clipboard | **Not implemented** |
-| Developer ID signature, notarization, reliable 2-Mac handoff | **Not implemented** |
-| Windows/Linux support | Adapter contracts only; not implemented |
+| Git manifest capture/validation and conflict-safe local restore | Implemented, portable tests and local Git E2E |
+| SwiftUI handoff and AirDrop/manual JSON transfer | Implemented, macOS CI build/tests; physical AirDrop QA pending |
+| Authenticated session + Keychain peer trust | Crypto building blocks tested; **not wired to network** |
+| Cross-platform workspace wire protocol | Implemented and tested; **no listener** |
+| Native Apple Silicon + Intel preview packages | CI verified; ad-hoc signed, not notarized |
+| Actual Mac A → Mac B automatic handoff | Not implemented |
+| macOS Developer ID signed stable release | Not implemented |
+
 
 ## Workspace Handoff (new product direction)
 
@@ -62,17 +63,17 @@ swift test --parallel
 open dist/InputMesh.app
 ```
 
-Only grant permissions after reviewing the app's permissions explanation. This preview operates locally, exposes no network control endpoint and cannot yet connect another Mac. Its `inputmesh --probe` CLI reports counts, not typed keys or pointer coordinates.
+Workspace Handoff does not require Accessibility or Input Monitoring permissions. The legacy Quartz probe is a separate developer diagnostic; no permission needs to be granted to export/import a Git manifest. The preview has no network listener. Its `inputmesh --probe` CLI reports counts, not typed keys or pointer coordinates.
 
 Alternatively see [Releases](https://github.com/truongbo17/inputmesh/releases) for clearly marked developer previews, or [Actions](https://github.com/truongbo17/inputmesh/actions) for test reports and CI artifacts. The ZIP is ad-hoc signed, **not** Gatekeeper-notarized; it is not a user-facing stable installer.
 
 ## App navigation
 
-- **Overview** — local machine readiness, honest control state and a workspace placeholder.
-- **Devices** — pairing status; disabled until encrypted trusted pairing is implemented.
-- **Screen Layout** — topology planning (editor pending).
-- **Security** — Accessibility status and privacy guarantees.
-- **About** — source and preview status.
+- **Overview** — local Git handoff workflow and precise capability status.
+- **Handoff Guide** — export, manual transfer, conflict inspection and explicit editor-open sequence.
+- **Devices** — local Mac information; peer discovery unavailable in this preview.
+- **Privacy & Security** — manifest data scope, local-only processing and no keyboard monitoring.
+- **About** — development build status and repository information.
 
 ## Architecture
 
@@ -96,11 +97,11 @@ docs/
   competitor-review.md, releasing.md, test-plan.md, roadmap.md
 ```
 
-The Swift portable core and native adapters are real code; a Go control daemon remains a future architectural option, **not** an implemented dependency. No backend, tracking services or OS-level protection bypass are included.
+The portable Swift workspace core and native adapters are real code. No Go daemon or network listener is part of the current preview. No backend, tracking services or OS-level protection bypass are included.
 
 ## Security and release policy
 
-No root or SIP bypass. No key-value logging. No unauthenticated remote input. A legitimate release needs cryptographic pairing, exclusive input leases, fail-open recovery and physical hardware evidence. The [release evidence model](Sources/InputMeshCore/ReleaseGate.swift) deliberately fails until every gate is established. A green unit test does not prove Universal Control works.
+No root or SIP bypass, key logging or unauthenticated remote actions. A legitimate Workspace Handoff release needs encrypted two-sided peer consent, revocation, conflict-safe Git state checks and physical two-Mac evidence. The [release evidence model](Sources/InputMeshCore/ReleaseGate.swift) deliberately fails until every gate is established. A green unit test does not prove Universal Control works.
 
 - [Developer guide](CONTRIBUTING.md)
 - [Native UX specification](docs/ui-ux.md)
