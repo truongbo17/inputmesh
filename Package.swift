@@ -11,7 +11,7 @@ var products: [Product] = [
 var targets: [Target] = [
     .target(name: "InputMeshCore", exclude: ["README.md"]),
     .target(name: "InputMeshPlatform", dependencies: ["InputMeshCore"]),
-    .target(name: "InputMeshMacOS", dependencies: ["InputMeshCore", "InputMeshPlatform"]),
+    .target(name: "InputMeshMacOS", dependencies: ["InputMeshCore", "InputMeshPlatform", "InputMeshWorkspace"]),
     .target(name: "InputMeshWorkspace"),
     .executableTarget(name: "InputMeshCLI", dependencies: ["InputMeshCore", "InputMeshMacOS", "InputMeshWorkspace"]),
     .testTarget(name: "InputMeshCoreTests", dependencies: ["InputMeshCore"]),
